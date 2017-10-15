@@ -4,6 +4,7 @@ import {
 } from '../actions/index';
 
 import parseText from './predict/TextParser';
+
 import {
 	assignNewWords,
 	assignLeadingWords
@@ -13,7 +14,11 @@ export function predict(state = initialState, action) {
 	switch(action.type) {
 		case TRAIN_FROM_TEXT: {			
 				// extend the current words object with the new data
-			const parsed = parseText(action.text, action.options);	// options na net do
+			const parsed = parseText(
+				action.text,
+				action.options,
+				action.exclude
+			);
 			
 			const assigned = assignNewWords(state.words, parsed.words);
 

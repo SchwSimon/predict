@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
 
+import Settings from '../components/Settings';
+import Trainer from '../components/Trainer';
 import PredictInput from '../components/PredictInput';
 import RandomText from '../components/RandomText';
 
@@ -9,7 +11,9 @@ class Predict extends PureComponent {
 	render() {
 		return (
 			<div>
-				<PredictInput isTrainInput={true} />
+				<Settings />
+				<Trainer />
+				<PredictInput />
 				<RandomText />
 			</div>
 		)

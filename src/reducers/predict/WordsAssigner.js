@@ -31,14 +31,12 @@ export function assignNewWords(words, nWords) {
 		Object.keys(words[key]).forEach((subkey) => {
 			wordWeightArray.push({
 				word: subkey,
-				weight: words[key][subkey]
+				weight: words[key][subkey].weight
 			})
 		});
 		wordsWeighted[key] = wordWeightArray.sort((a, b) => {
 			return a.weight < b.weight;
-		}).map((element) => {
-			return element.word;
-		});
+		}).map(element => element.word);
 	});
 	
 	return {

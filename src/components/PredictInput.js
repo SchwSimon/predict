@@ -1,23 +1,30 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
-import { trainFromText } from '../actions/index';
-
 import '../styles/PredictInput.css';
 
+/*
+ * Returns a list of possible next words for a given word
+ */
 function WordPredictions(props) {
-	if (!props.nextWords[props.word]) return null;	// return if the word does not yet exist
+		// return if the word does exist
+	if (!props.words[props.word]) return null;	
+	
+		// show the most common next words for the input word
 	let list = [];
 	for(let i = 0; i < props.max; i++) {
-		if (!props.nextWords[props.word][i]) break;
+			// break if there are no more possible next words for this word
+		if (!props.words[props.word][i]) break;
+		
 		list.push(
 			<div
 				key={i}
 				onClick={props.onWordSelect}
-			>{props.nextWords[props.word][i]}
+			>{props.words[props.word][i]}
 			</div>
 		);
 	}
+	
 	return (
 		<div className="PredictInput-prediction" >
 			{list}
@@ -25,56 +32,50 @@ function WordPredictions(props) {
 	)
 }
 
+/*
+ * Render a text input/textare field which shows possible next words for the last entered word
+ */
 class PredictInput extends PureComponent {	
 	constructor(props) {
 		super(props);
 		
 		this.state = {
-			word: ''
+			word: ''	// the current last word
 		}
 		
 		this.onInputChange = this.onInputChange.bind(this);
-		this.onInputEnter = this.onInputEnter.bind(this);
 		this.onWordSelect = this.onWordSelect.bind(this);
 	}
 	
 	// on text input change handler
 	onInputChange() {
 		let inputText = this.input.value.trim();
-
+			
+			// set the last entered word
 		this.setState({
 			word: inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1)
 		});
 	}
 	
-	onInputEnter(event) {
-		if (event.key === 'Enter' && this.input.value.trim() !== '') {
-			this.props.dispatch(trainFromText(this.input.value));
-			this.input.value = '';
-		}
-	}
-	
 	// inject the selected word
 	onWordSelect(event) {
 		this.input.value = this.input.value.replace(/ +$/g,"") +	// remove the whitespace at the end of the string
-			' ' + event.target.textContent + ' '; 							// concat the selected word with a leading whitespace
+			' ' + event.target.textContent + ' '; 							// concat the selected word with a leading & trailing whitespace
 			
-		this.onInputChange();	// trigger onInputChange manually
+		this.onInputChange();	// trigger the text input change manually
 	}
 	
 	render() {
-		//<PredictSettings />
 		return (
 			<div className="PredictInput-con">
 				<textarea
 					ref={input => this.input = input}
 					className="PredictInput-input"
 					onChange={this.onInputChange}
-					onKeyDown={(this.props.isTrainInput) ? this.onInputEnter : null}
 				/>
 				<WordPredictions
 					word={this.state.word}
-					nextWords={this.props.nextWords}
+					words={this.props.words}
 					max={this.props.maxPredictions || 10}
 					onWordSelect={this.onWordSelect}
 				/>
@@ -85,6 +86,6 @@ class PredictInput extends PureComponent {
 
 export default connect(
 	state => ({
-		nextWords: state.predict.wordsWeighted
+		words: state.predict.wordsWeighted
 	})
 )(PredictInput);

@@ -1,0 +1,8 @@
+.Trainer {
+	position: relative;
+	display: inline-block;
+}
+	.Trainer-input {
+		width: 600px;
+		height: 200px;
+	}

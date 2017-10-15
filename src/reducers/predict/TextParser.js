@@ -1,75 +1,88 @@
+// TODO: parseText() needs more refinement
 
 const PHRASE_END_PUNCTUATION = '.';
 const PHRASE_BREAK_PUNCTUATION = ',';
 
-// extract & return the quoted text passages and the input text without them
-function extractMarkedPhrases(text, mark, join, markedPhrases = []) {
+/*
+ * extract text between the given marks
+ * return the text with or without the extracted text
+ */
+function extractMarkedPhrases(text, mark, join, markedTexts = []) {
+		// force array for start & ending mark
 	mark = (typeof mark === 'string') ? [mark,mark] : mark;
-		// get the first quote position
-	let quoteStart = text.indexOf(mark[0]);
-	if (quoteStart > -1) {				
-			// get the second quote position
-		let quoteEnd = text.indexOf(mark[1], quoteStart+1);
+		// get the starting mark position
+	let markStart = text.indexOf(mark[0]);
+	if (markStart > -1) {				
+			// get the ending mark position
+		let markEnd = text.indexOf(mark[1], markStart+1);
 
-		if (quoteEnd > -1) {
-				// extract the text between 2 marks
-			let quote = text.substr(quoteStart+1, quoteEnd-quoteStart-1).trim();
-				// push new marked phrases to the marked text array, optionally set the phrase end punctuation if none is given
-			markedPhrases.push((quote.slice(-1) !== PHRASE_END_PUNCTUATION) ? quote + PHRASE_END_PUNCTUATION : quote);
+		if (markEnd > -1) {
+				// extract the text between the 2 marks
+			let markedText = text.substr(markStart+1, markEnd-markStart-1).trim();
+				// push it to the marked texts array
+				// set a phrase end punctuation if none is given at the end of the marked text
+			markedTexts.push((markedText.slice(-1) !== PHRASE_END_PUNCTUATION) ? markedText + PHRASE_END_PUNCTUATION : markedText);
 			
-				// put the text together without the current mark
-			text = text.substr(0, quoteStart) + text.substr(quoteEnd+1);
+				// put the text together without the marked text
+			text = text.substr(0, markStart) + text.substr(markEnd+1);
 				
-				// repeat till no more marked are given
-			return extractMarkedPhrases(text, mark, join, markedPhrases);
+				// repeat till no more marks are given
+			return extractMarkedPhrases(text, mark, join, markedTexts);
 		}
 		
-			// concat the rest of the text to the text if no dialog ending quote exists
-		text = text.substr(0, quoteStart) + text.substr(quoteStart+1);
+			// concat the rest without the starting mark to the text if no ending mark is given
+		text = text.substr(0, markStart) + text.substr(markStart+1);
 	}
 	
-	if (join)	// join the marked phrase(s) with the return text?
-		text += ' ' + markedPhrases.join(' ');
+	if (join)	// append the marked phrase(s) to the text without marks
+		text += ' ' + markedTexts.join(' ');
 	
 	return text;
 }
 
-// parse the input text
-// return 
-export default function parseText(text, options = {}) {
+/*
+ * feed text parser
+ * return a proper parsed text ready for training
+ */
+export default function parseText(text, options, exclude) {
 	text = text.toLowerCase();	// treat input text in lowercase only
-	
-	console.log( text)
-	
+
 	text = text.replace(/[”“‘’«»]/g, '"')	// replace quotation marks to default: "
 					.replace(/[´`’]/g, "'")		// replace apostrophe marks to default: ' 
+						.replace(/'+/g, "'")		// replace multiple apostrophes to a single one
+							.replace(/ ' /g, ' ')		// remove floating apostrophes
 					.replace(/[;?!:.]/g, PHRASE_END_PUNCTUATION)	// replace sentence ending or sentence breaking marks to default: . 
 					.replace(/\n\s*\n/g, PHRASE_END_PUNCTUATION)	// replace double new lines to default: .
 					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION);	// replace sentence break mark to default: ,
 
-	text = extractMarkedPhrases(text, '"', options.joinQuoted || true);			// extract quoted phrases from the normal ones
-	text = extractMarkedPhrases(text, ['(',')'], options.joinBraced || false);
-	text = extractMarkedPhrases(text, ['{','}'], options.joinBrackets || false);	//...
+	if (!options.allowNumbers)
+		text = text.replace(/[0-9]/g, ' ');	// remove numbers
+	if (!options.allowSpecials)
+		text = text.replace(/[^0-9a-zöäü.,'-]/g, ' ');	// remove non alphanumeric characters
 	
-	if (options.alnumOnly)
-		text = text.replace(/[^0-9a-zöäü.,']/g, ' ')
-	else if (options.lettersOnly)
-		text = text.replace(/[^a-zöäü.,']/g, ' ')
-		
-	if (options.exclude) {
-		options.exclude = (typeof options.exclude === 'string') ? [options.exclude] : options.exclude;
-		options.exclude.forEach((str) => {
+	if (exclude) {
+		if (typeof exclude === 'string') {
+			exclude = [options.exclude];
+		} else if (!Array.isArray(exclude)) {
+			throw new Error('parseText(): exclude argument must be String or Array');
+		}
+			// remove @exclude strings
+		exclude.forEach((str) => {
 			text = text.replace(str, ' ');
 		});
 	}
 	
+		// does not support yet bracket in bracket
+	text = extractMarkedPhrases(text, '"', options.joinQuotes);
+	text = extractMarkedPhrases(text, ['(',')'], options.joinRoundBrackets);
+	text = extractMarkedPhrases(text, ['{','}'], options.joinCurlyBrackets);
+	text = extractMarkedPhrases(text, ['[',']'], options.joinSquareBrackets);
+	
 	text = text.replace(/\.+/g, '.')		// remove multiple dots
-					.replace(/\,+/g, ',')		// remove multiple commas
+					.replace(/,+/g, ',')		// remove multiple commas
 					.replace(/\s+/g, ' ')		// remove multiple spaces
 					.replace(/[.]/g, PHRASE_END_PUNCTUATION + ' ')			// put a space after dots
 					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION + ' ');	// 					... commas
-	
-	console.log( text )
 	
 	let wordsFeed = {};
 	let startingWords = {};
@@ -78,20 +91,21 @@ export default function parseText(text, options = {}) {
 	text.split(' ').forEach((word, index, array) => {
 		if (!word) return;	// return if the word is empty
 		
+			// remove the word punctuation if needed and set the word position meaning
 		let isEndingWord;
 		switch(word.slice(-1)) {
-			case PHRASE_END_PUNCTUATION: {
+			case PHRASE_END_PUNCTUATION:
 				word = word.slice(0, -1);
 				isEndingWord = isStartingWord = true;
-			} break;
-			case PHRASE_BREAK_PUNCTUATION: {
+				break;
+			case PHRASE_BREAK_PUNCTUATION:
 				word = word.slice(0, -1);
 				isEndingWord = isStartingWord = false;
-			} break;
+				break;
 			default: isEndingWord = false;
 		}
 		
-		if (!wordsFeed[word])	// do we know the word already?
+		if (!wordsFeed[word])
 			wordsFeed[word] = {};
 		
 		if (isEndingWord) {
@@ -102,22 +116,24 @@ export default function parseText(text, options = {}) {
 			startingWords[word] = (startingWords[word] || 0) + 1;
 		}
 		
-		let nextWord = array[index+1];	// the next word of the current phrase
+		let nextWord = array[index+1];	// get this word's follow up
 		if (typeof nextWord === 'undefined') {
 			endingWords[word] = (endingWords[word] || 0) + 1;
-			return;	// return on end of text
+			return;	// return on last word
 		}
 		
 		if (!nextWord) return;	// return if the word is empty
 		
+			// slice the next word's punctuation if needed
 		switch(nextWord.slice(-1)) {
 			case PHRASE_END_PUNCTUATION:
-			case PHRASE_BREAK_PUNCTUATION: {
+			case PHRASE_BREAK_PUNCTUATION:
 				nextWord = nextWord.slice(0, -1);
-			} break;
+				break;
 			default: break;
 		}
-
+			
+			// add to the words feed and increment the appearence counter
 		wordsFeed[word][nextWord] = (wordsFeed[word][nextWord] || 0) + 1;	// increment the next word count for this word by 1
 	});
 	
