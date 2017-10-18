@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
-import '../styles/PredictInput.css';
+import '../styles/predict-input.css';
 
 /*
  * Returns a list of possible next words for a given word
@@ -49,11 +49,11 @@ class PredictInput extends PureComponent {
 	
 	// on text input change handler
 	onInputChange() {
-		let inputText = this.input.value.trim();
-			
+			// trim and replace the last occurence of a newline with ' '
+		let inputText = this.input.value.trim().replace(/\n(?=[^\n]*$)/, ' ');
 			// set the last entered word
 		this.setState({
-			word: inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1)
+			word: inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1).toLowerCase()
 		});
 	}
 	
@@ -67,18 +67,22 @@ class PredictInput extends PureComponent {
 	
 	render() {
 		return (
-			<div className="PredictInput-con">
-				<textarea
-					ref={input => this.input = input}
-					className="PredictInput-input"
-					onChange={this.onInputChange}
-				/>
-				<WordPredictions
-					word={this.state.word}
-					words={this.props.words}
-					max={this.props.maxPredictions || 10}
-					onWordSelect={this.onWordSelect}
-				/>
+			<div>
+				<div className="PredictInput">
+					<div className="PredictInput-label">Write something here.<br/>If you have fed enough words,<br/>it will predict you some possible words you may want to write next.</div>
+					<textarea
+						ref={input => this.input = input}
+						className="PredictInput-input onInputFocus"
+						onChange={this.onInputChange}
+						spellecheck="false"
+					/>
+					<WordPredictions
+						word={this.state.word}
+						words={this.props.words}
+						max={this.props.maxPredictions || 10}
+						onWordSelect={this.onWordSelect}
+					/>
+				</div>
 			</div>
 		)
 	}

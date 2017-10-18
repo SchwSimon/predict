@@ -1,0 +1,21 @@
+.Statistic {
+	float: right;
+	text-align: right;
+}
+	.Statistic-label,
+	.Statistic-value {
+		display: inline-block;
+		vertical-align: middle;
+		padding: 3px 10px 3px;
+		background-color: whitesmoke;
+		border: 1px solid gray;
+		border-bottom: 0 none;
+	} .Statistic-label {
+		color: #595959;
+		width: 184px;
+		border-left-style: dashed;
+	} .Statistic-value {
+		color: black;
+		text-align: right;
+		border-right: 0 none;
+	}

@@ -1,0 +1,113 @@
+.Trainer {
+	position: relative;
+	float: left;
+}
+	.Trainer-head-label {
+		text-align: left;
+		border: 1px solid lightgray;
+		border-bottom: 0 none;
+		padding: 12px 20px 12px;
+		font-weight: bold;
+		font-size: 20px;
+		background-color: whitesmoke;
+	}
+	.Trainer-head-learnBtn {
+		position: absolute;
+		top: 8px; right: 12px;
+		background-color: #ffd3a9;
+		padding: 3px 18px;
+		font-weight: bold;
+		font-size: 20px;
+		cursor: pointer;
+		letter-spacing: 5px;
+		border-radius: 3px;
+		border: 1px outset white;
+		text-shadow: 1px 1px 1px whitesmoke;
+		transition: box-shadow 300ms;
+	} .Trainer-head-learnBtn:hover {
+		box-shadow: inset 0 0 0 20px #ffb36b;
+	} .Trainer-head-learnBtn:active {
+		border-style: inset;
+	}
+	.Trainer-text-con {
+		position: relative;
+	}
+		.Trainer-text-input {
+			display: block;
+			width: 498px;
+			min-height: 149px;
+			height: 149px;
+			border: 1px solid lightgray;
+			margin: 0;
+			padding: 4px;
+			resize: vertical;
+		}
+		.Trainer-text-modal {
+			display: none;
+			position: absolute;
+			top: 0; left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0,0,0,0.7);
+		}
+			.Trainer-text-modal-content {
+				display: inline-block;
+				vertical-align: middle;
+				color: white;
+				max-width: 99%;
+				font-weight: bold;
+				font-size: 26px;
+				text-shadow: 1px 1px 1px gray;
+			}
+				.Trainer-text-modal-close {
+					display: block;
+					width: 100px;
+					margin: 12px auto 0;
+					padding: 6px 0;
+					border: 1px solid lightgray;
+					background-color: white;
+					border-radius: 4px;
+					cursor: pointer;
+					font-weight: bold;
+					font-size: 20px;
+					color: gray;
+				} .Trainer-text-modal-close:hover {
+					color: black;
+				}
+	.Trainer-url-input,
+	.Trainer-file-con {
+		position: absolute;
+		top: 100%;
+		width: 50%;
+		height: 30px;
+		padding: 0;
+		border: 1px solid lightgray;
+		border-top: 0 none;
+		text-align: center;
+	} .Trainer-file-con {
+		border-right: 0 none;
+		left: 0;
+	} .Trainer-url-input {
+		border-left-style: dashed;
+		right: 0;
+	}
+		.Trainer-file-label {
+			display: inline-block;
+			vertical-align: middle;
+			color: gray;
+			font-size: 13px;
+		}
+		.Trainer-file-input {
+			position: absolute;
+			top: 0; left: 0;
+			width: 100%;
+			height: 100%;
+			opacity: 0;
+			cursor: pointer;
+		}
+
+@media all and (max-width: 720px) {
+	.Trainer-text-input {
+		width: 380px;
+	}
+}

@@ -1,20 +1,17 @@
 import React, { PureComponent } from 'react';
 
-import Settings from '../components/Settings';
-import Trainer from '../components/Trainer';
-import PredictInput from '../components/PredictInput';
-import RandomText from '../components/RandomText';
+import Learn from './Learn';	// container
 
-import '../styles/Predict.css';
+import PredictInput from '../components/predict-input';
+import PredictRandom from '../components/predict-random';
 
 class Predict extends PureComponent {
 	render() {
 		return (
 			<div>
-				<Settings />
-				<Trainer />
+				<Learn />
 				<PredictInput />
-				<RandomText />
+				<PredictRandom />
 			</div>
 		)
 	}

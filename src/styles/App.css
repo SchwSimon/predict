@@ -1,18 +1,36 @@
 .App {
-  text-align: center;
+	text-align: center;
 }
-
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
+	.App-header {
+		background-color: #222;
+		height: 75px;
+		padding: 20px;
+		color: white;
+	}
+	
+	.App-title {
+		font-size: 1.7em;
+	}
+	
+	.App-body {
+		width: 713px;
+		margin: 0 auto 50px;
+	}
+	
+	.vCenterer {
+		display: inline-block;
+		vertical-align: middle;
+		height: 100%;
+		width: 0.5%;
+		opacity: 0;
+	}
+	
+	.onInputFocus:focus {
+		box-shadow: inset 0 0 4px 0 #aaa;
+	}
+	
+@media all and (max-width: 720px) {
+	.App-body {
+		width: 595px;
+	}
 }

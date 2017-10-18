@@ -44,13 +44,28 @@ function extractMarkedPhrases(text, mark, join, markedTexts = []) {
  * feed text parser
  * return a proper parsed text ready for training
  */
-export default function parseText(text, options, exclude) {
+export default function parseText(text, options) {
 	text = text.toLowerCase();	// treat input text in lowercase only
 
-	text = text.replace(/[”“‘’«»]/g, '"')	// replace quotation marks to default: "
+	if (options.exclude) {
+		if (typeof options.exclude === 'string') {
+			options.exclude = [options.exclude];
+		} else if (!Array.isArray(options.exclude)) {
+			throw new Error('parseText(): exclude argument must be String or Array');
+		}
+			// remove @exclude strings
+		options.exclude.forEach((str) => {
+			str = str.trim();
+			if (!str) return;	// return on empty string
+			text = text.replace(new RegExp(str.toLowerCase(), 'g'), ' ');
+		});
+	}
+	
+	text = text.replace(/(?:https?|ftp):\/\/[\n\S]+/g, ' ')	// remove urls (https:// & http://)
+					.replace(/(?:www).[\n\S]+/g, ' ')	// remvove urls (www.)
+					
+					.replace(/[”“‘’«»]/g, '"')	// replace quotation marks to default: "
 					.replace(/[´`’]/g, "'")		// replace apostrophe marks to default: ' 
-						.replace(/'+/g, "'")		// replace multiple apostrophes to a single one
-							.replace(/ ' /g, ' ')		// remove floating apostrophes
 					.replace(/[;?!:.]/g, PHRASE_END_PUNCTUATION)	// replace sentence ending or sentence breaking marks to default: . 
 					.replace(/\n\s*\n/g, PHRASE_END_PUNCTUATION)	// replace double new lines to default: .
 					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION);	// replace sentence break mark to default: ,
@@ -58,19 +73,7 @@ export default function parseText(text, options, exclude) {
 	if (!options.allowNumbers)
 		text = text.replace(/[0-9]/g, ' ');	// remove numbers
 	if (!options.allowSpecials)
-		text = text.replace(/[^0-9a-zöäü.,'-]/g, ' ');	// remove non alphanumeric characters
-	
-	if (exclude) {
-		if (typeof exclude === 'string') {
-			exclude = [options.exclude];
-		} else if (!Array.isArray(exclude)) {
-			throw new Error('parseText(): exclude argument must be String or Array');
-		}
-			// remove @exclude strings
-		exclude.forEach((str) => {
-			text = text.replace(str, ' ');
-		});
-	}
+		text = text.replace(/[^0-9a-zöäüéèôêëç.,'-]/g, ' ');	// remove non alphanumeric characters	
 	
 		// does not support yet bracket in bracket
 	text = extractMarkedPhrases(text, '"', options.joinQuotes);
@@ -78,19 +81,34 @@ export default function parseText(text, options, exclude) {
 	text = extractMarkedPhrases(text, ['{','}'], options.joinCurlyBrackets);
 	text = extractMarkedPhrases(text, ['[',']'], options.joinSquareBrackets);
 	
-	text = text.replace(/\.+/g, '.')		// remove multiple dots
+	text = text.replace(/'+/g, "'")		// replace multiple apostrophes
+					.replace(/-+/g, '-')		// replace multiple hyphens
+					.replace(/\.+/g, '.')		// remove multiple dots
 					.replace(/,+/g, ',')		// remove multiple commas
-					.replace(/\s+/g, ' ')		// remove multiple spaces
-					.replace(/[.]/g, PHRASE_END_PUNCTUATION + ' ')			// put a space after dots
-					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION + ' ');	// 					... commas
+					
+					.replace(/[.]/g, PHRASE_END_PUNCTUATION + ' ')		// put a space after dots
+					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION + ' ')	// put a space after commas
+					
+					.replace(/ ' /g, ' ')		// remove floating apostrophes
+					.replace(/ - /g, ' ')		// remove floating hyphens
+					.replace(/ . /g, ' ')		// remove floating dots
+					.replace(/ , /g, ' ')		// remove floating commas
+					
+					.replace(/\s+/g, ' ');		// remove multiple spaces
 	
 	let wordsFeed = {};
 	let startingWords = {};
 	let endingWords = {};
 	let isStartingWord = true;
-	text.split(' ').forEach((word, index, array) => {
-		if (!word) return;	// return if the word is empty
-		
+	let inputWords = text.split(' ').filter((word) => {
+		return !(word === '' || word === '.');	// filter empty array elements
+	});
+	
+		// count the new input words
+	const inputWordsCount = inputWords.length;
+	
+		// compute the input words
+	inputWords.forEach((word, index, array) => {
 			// remove the word punctuation if needed and set the word position meaning
 		let isEndingWord;
 		switch(word.slice(-1)) {
@@ -122,8 +140,6 @@ export default function parseText(text, options, exclude) {
 			return;	// return on last word
 		}
 		
-		if (!nextWord) return;	// return if the word is empty
-		
 			// slice the next word's punctuation if needed
 		switch(nextWord.slice(-1)) {
 			case PHRASE_END_PUNCTUATION:
@@ -140,6 +156,7 @@ export default function parseText(text, options, exclude) {
 	return {
 		words: wordsFeed,
 		starting: startingWords,
-		ending: endingWords
+		ending: endingWords,
+		inputWords: inputWordsCount
 	}
 }
