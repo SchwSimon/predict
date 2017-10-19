@@ -19,8 +19,13 @@ class Settings extends PureComponent {
 	constructor(props) {
 		super(props);
 		
+		this.state = {
+			showSettings: false
+		}
+		
 		this.onCheckboxChange = this.onCheckboxChange.bind(this);
 		this.onExcludeChange = this.onExcludeChange.bind(this);
+		this.toggleSettings = this.toggleSettings.bind(this);
 	}
 	
 	// on bool setting toggle
@@ -57,32 +62,44 @@ class Settings extends PureComponent {
 		}
 	}
 	
+	toggleSettings() {
+		this.setState({
+			showSettings: !this.state.showSettings
+		})
+	}
+	
 	render() {
 		return (
 			<div className="Settings">
-				{Object.keys(boolSettingTitles).map((key, index) => {
-					return (
-						<div
-							className={'Settings-btn ' + ((this.props.settings[key]) ? 'true' : 'false')}
-							key={index}
-						>
-							{boolSettingTitles[key]}
-							<input
-								className="Settings-checkbox"
-								type="checkbox"
-								data-settingskey={key}
-								onChange={this.onCheckboxChange}
-							/>
-						</div>
-					);
-				})}
-				<textarea
-					ref={input => this.excludeInput = input}
-					className="Settings-exclude"
-					placeholder="Exclude this text, for multiple excludes separate with a comma (case insensitive)"
-					onKeyUp={this.onExcludeChange}
-					spellecheck="false"
-				/>
+				<div className={'Settings-main' + ((this.state.showSettings) ? ' Settings-show' : '')}>
+					{Object.keys(boolSettingTitles).map((key, index) => {
+						return (
+							<div
+								className={'Settings-btn ' + ((this.props.settings[key]) ? 'true' : 'false')}
+								key={index}
+							>
+								{boolSettingTitles[key]}
+								<input
+									className="Settings-checkbox"
+									type="checkbox"
+									data-settingskey={key}
+									onChange={this.onCheckboxChange}
+								/>
+							</div>
+						);
+					})}
+					<textarea
+						ref={input => this.excludeInput = input}
+						className="Settings-exclude"
+						placeholder="Exclude this text, for multiple excludes separate with a comma (case insensitive)"
+						onKeyUp={this.onExcludeChange}
+						spellecheck="false"
+					/>
+				</div>
+				<div className={'Settings-trigger' + ((this.state.showSettings) ? ' Settings-trigger-open' : '')} onClick={this.toggleSettings}>
+					<div className="Settings-trigger-label">S E T T I N G S</div>
+					<div className="vCenterer"></div>
+				</div>
 			</div>
 		)
 	}

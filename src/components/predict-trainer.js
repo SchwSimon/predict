@@ -158,29 +158,27 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 					onClick={this.onTextLearn}
 					disabled={this.state.modalShow}
 				>Learn!</button>
-				<div className="Trainer-text-con">
-					<textarea
-						className="Trainer-text-input onInputFocus"
-						ref={input => this.textInput = input}
-						spellecheck="false"
-					/>
-					<div
-						ref={modal => this.modal = modal}
-						className="Trainer-text-modal"
-						style={{
-							display: this.state.modalShow ? 'block' : 'none'
-						}}
-					>
-						<div className="Trainer-text-modal-content">
-							{this.state.modalContent}
-							<button className="Trainer-text-modal-close" onClick={this.onModalClose}>OK</button>
-						</div>
-						<div className="vCenterer" />
+				<textarea
+					className="Trainer-text-input onInputFocus"
+					ref={input => this.textInput = input}
+					spellecheck="false"
+				/>
+				<div
+					ref={modal => this.modal = modal}
+					className="Trainer-text-modal"
+					style={{
+						display: this.state.modalShow ? 'block' : 'none'
+					}}
+				>
+					<div className="Trainer-text-modal-content">
+						{this.state.modalContent}
+						<button className="Trainer-text-modal-close" onClick={this.onModalClose}>OK</button>
 					</div>
+					<div className="vCenterer" />
 				</div>
-				<div className="Trainer-file-con">
+				<div className="Trainer-file">
 					<div className="Trainer-file-label">
-						Import txt file
+						Import .txt file
 						<span role="img" aria-label="file"> &#128193;</span>
 					</div>
 					<div className="vCenterer" />
@@ -196,7 +194,7 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 					className="Trainer-url-input"
 					ref={input => this.urlInput = input}
 					onKeyDown={this.onUrlEnter}
-					placeholder="Text from website (URL)"
+					placeholder="Get URL text (press enter)"
 					type="text"
 				/>
 			</div>

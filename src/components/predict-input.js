@@ -69,7 +69,7 @@ class PredictInput extends PureComponent {
 		return (
 			<div>
 				<div className="PredictInput">
-					<div className="PredictInput-label">Write something here.<br/>If you have fed enough words,<br/>it will predict you some possible words you may want to write next.</div>
+					<div className="PredictInput-label">Write something here.<br/>If you have fed enough words, it will predict you some possible words you may want to write next.</div>
 					<textarea
 						ref={input => this.input = input}
 						className="PredictInput-input onInputFocus"

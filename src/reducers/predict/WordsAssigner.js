@@ -57,11 +57,10 @@ export function assignNewWords(words, nWords) {
 
 export function assignLeadingWords(words, nWords) {
 	words = Object.assign({}, words);
-	
 	Object.keys(nWords).forEach((key) => {
 		if (!words[key])
 			words[key] = {count:0};
-		words[key].count = words[key].count + nWords[key];	// increment next word occurrence count
+		words[key].count = words[key].count + (nWords[key].count || nWords[key]);	// increment next word occurrence count
 	});
 	
 	// calculate the word's probability as leading (starting/ending) word

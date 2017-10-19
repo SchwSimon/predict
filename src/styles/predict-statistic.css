@@ -12,10 +12,11 @@
 		border-bottom: 0 none;
 	} .Statistic-label {
 		color: #595959;
-		width: 184px;
+		width: 120px;
 		border-left-style: dashed;
 	} .Statistic-value {
 		color: black;
 		text-align: right;
+		min-width: 10px;
 		border-right: 0 none;
 	}

@@ -1,46 +1,91 @@
 .Settings {
-	float: right;
-	border: 1px solid lightgray;
-	border-left: 0 none;
+	position: absolute;
+	top: 0; right: 0;
+	height: 100%;
 }
-	.Settings-btn {
-		position: relative;
-		text-align: left;
-		padding: 5px 6px 6px;
-		border-bottom: 1px dashed lightgray;
-		height: 16px;
-		font-size: 14px;
-	} .Settings-btn.false {
-		background-color: #f3f3f3;
-		text-decoration: line-through;
-	} .Settings-btn:hover {
-		text-decoration: none;
-		background-color: white;
-	} .Settings-btn.true {
-		background-color: #ffd8b3;
+	.Settings-main {
+		width: 0;
+		transition: width 360ms;
+		overflow: hidden;
+		box-sizing: border-box;
+	} .Settings-show {
+		width: 206px;
+		border-right: 2px solid gray;
+		border-bottom: 2px solid gray;
 	}
-		.Settings-checkbox {
-			position: absolute;
-			top: 0; left: 0;
-			width: 100%;
-			height: 100%;
-			opacity: 0;
-			cursor: pointer;
-		} 
-		.Settings-exclude {
-			border: 0 none;
-			width: 96%;
-			padding: 3px 2%;
-			height: 63px;
-			resize: none;
-			margin: 0;
-			font-size: 12px;
-			background-color: #fffbf7;
-			transition: box-shadow 330ms;
-		} .Settings-exclude:focus {
+		.Settings-btn {
+			position: relative;
+			text-align: left;
+			padding: 5px 6px 6px;
+			border-bottom: 1px dashed lightgray;
+			height: 16px;
+			font-size: 14px;
+			white-space: nowrap;
+		} .Settings-btn.false {
+			background-color: #f3f3f3;
+			text-decoration: line-through;
+		} .Settings-btn:hover {
+			text-decoration: none;
 			background-color: white;
-		} .Settings-exclude[isContent] {
-			box-shadow: inset 0 0 0 40px #ffe8d2;
+		} .Settings-btn.true {
+			background-color: #ffd8b3;
 		}
-			
+			.Settings-checkbox {
+				position: absolute;
+				top: 0; left: 0;
+				width: 100%;
+				height: 100%;
+				opacity: 0;
+				cursor: pointer;
+				margin: 0;
+			} 
+			.Settings-exclude {
+				border: 0 none;
+				width: 100%;
+				padding: 3px 2%;
+				height: 69px;
+				resize: none;
+				margin: 0;
+				font-size: 12px;
+				background-color: #fffbf7;
+				transition: box-shadow 330ms;
+				box-sizing: border-box;
+			} .Settings-exclude:focus {
+				background-color: white;
+			} .Settings-exclude[isContent] {
+				box-shadow: inset 0 0 0 40px #ffe8d2;
+			}
 		
+		.Settings-trigger {
+			position: absolute;
+			top: 0; right: 100%;
+			height: calc(100% + 31px);
+			background-color: whitesmoke;
+			width: 31px;
+			text-align: center;
+			font-weight: bold;
+			font-size: 23px;
+			border: 1px solid lightgray;
+			box-sizing: border-box;
+			border-left: 1px dashed gray;
+			cursor: pointer;
+		} .Settings-trigger-open {
+			overflow: hidden;
+			box-shadow: 3px 0px 5px 0px gray;
+			border-left-style: solid;
+			border-bottom: 2px solid gray;
+			transition: box-shadow 220ms;
+		} .Settings-trigger-open:hover {
+			box-shadow: 2px 0px 2px 0px gray;
+		}
+			.Settings-trigger-label {
+				display: inline-block;
+				vertical-align: middle;
+				max-width: 99%;
+			}
+			
+@media all and (max-width: 725px) {
+	.Settings-exclude {
+		height: 67px;
+	}
+}

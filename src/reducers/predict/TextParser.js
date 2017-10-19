@@ -4,6 +4,15 @@ const PHRASE_END_PUNCTUATION = '.';
 const PHRASE_BREAK_PUNCTUATION = ',';
 
 /*
+ * Firefox only issue, when the words "watch" or "unwatch" are getting assigned,
+ * it will cause a TypeError later when parsing the object.
+ * Because we handle all text in lower case only the other prototypes are not an issue because they are camelcased
+ * Except for the constructor, so we just regex that word out..
+ */
+delete Object.prototype.watch;
+delete Object.prototype.unwatch;
+
+/*
  * extract text between the given marks
  * return the text with or without the extracted text
  */
@@ -60,15 +69,16 @@ export default function parseText(text, options) {
 			text = text.replace(new RegExp(str.toLowerCase(), 'g'), ' ');
 		});
 	}
-	
-	text = text.replace(/(?:https?|ftp):\/\/[\n\S]+/g, ' ')	// remove urls (https:// & http://)
+
+	text = text.replace(/constructor/g, ' ')	// remove the word "constructor", see the issue described at the beginning of the script
+					.replace(/(?:https?|ftp):\/\/[\n\S]+/g, ' ')	// remove urls (https:// & http://)
 					.replace(/(?:www).[\n\S]+/g, ' ')	// remvove urls (www.)
 					
 					.replace(/[”“‘’«»]/g, '"')	// replace quotation marks to default: "
 					.replace(/[´`’]/g, "'")		// replace apostrophe marks to default: ' 
-					.replace(/[;?!:.]/g, PHRASE_END_PUNCTUATION)	// replace sentence ending or sentence breaking marks to default: . 
-					.replace(/\n\s*\n/g, PHRASE_END_PUNCTUATION)	// replace double new lines to default: .
-					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION);	// replace sentence break mark to default: ,
+					.replace(/[?;!:.]/g, PHRASE_END_PUNCTUATION)	// replace sentence ending or sentence breaking marks to default phrase ending punctuation
+					.replace(/\n\s*\n/g, PHRASE_END_PUNCTUATION)	// replace double new lines to default phrase ending punctuation
+					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION);	// replace sentence break mark to default phrase breaking punctuation
 
 	if (!options.allowNumbers)
 		text = text.replace(/[0-9]/g, ' ');	// remove numbers
@@ -80,7 +90,7 @@ export default function parseText(text, options) {
 	text = extractMarkedPhrases(text, ['(',')'], options.joinRoundBrackets);
 	text = extractMarkedPhrases(text, ['{','}'], options.joinCurlyBrackets);
 	text = extractMarkedPhrases(text, ['[',']'], options.joinSquareBrackets);
-	
+
 	text = text.replace(/'+/g, "'")		// replace multiple apostrophes
 					.replace(/-+/g, '-')		// replace multiple hyphens
 					.replace(/\.+/g, '.')		// remove multiple dots
@@ -91,11 +101,11 @@ export default function parseText(text, options) {
 					
 					.replace(/ ' /g, ' ')		// remove floating apostrophes
 					.replace(/ - /g, ' ')		// remove floating hyphens
-					.replace(/ . /g, ' ')		// remove floating dots
+					.replace(/ \. /g, ' ')		// remove floating dots
 					.replace(/ , /g, ' ')		// remove floating commas
 					
 					.replace(/\s+/g, ' ');		// remove multiple spaces
-	
+
 	let wordsFeed = {};
 	let startingWords = {};
 	let endingWords = {};
@@ -103,7 +113,7 @@ export default function parseText(text, options) {
 	let inputWords = text.split(' ').filter((word) => {
 		return !(word === '' || word === '.');	// filter empty array elements
 	});
-	
+
 		// count the new input words
 	const inputWordsCount = inputWords.length;
 	

@@ -48,7 +48,7 @@ class PredictRandom extends PureComponent {
 			// begin the random text with the first index word as starting word
 		let randomText = indexWord.charAt(0).toUpperCase() + indexWord.substr(1);
 		
-		for( let i = 0; ;i++ ) {	// for(let i = 0, len = Math.ceil(Math.random()*(20-6)+6); i < len; i++) {
+		for( let i = 0; ;i++ ) {
 			if (!this.props.words[indexWord])	// if the indexWord does not exist, generate another one
 				indexWord = defaultKeyList[randomIndex(defaultKeyList.length)];
 			
