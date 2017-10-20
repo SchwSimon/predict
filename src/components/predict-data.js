@@ -116,7 +116,7 @@ class Data extends PureComponent {
 						left: 0
 					}}
 					onClick={this.onPreFeed}
-				>Click here to feed ~450k words taken from some books</button>
+				>Click here to feed ~2.7million words taken from 25 popular books</button>
 			</div>
 		)
 	}
