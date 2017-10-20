@@ -78,10 +78,7 @@ class Data extends PureComponent {
 	async loadPreFeedData() {
 		return new Promise((resolve, reject) => {
 			let dispatch = this.props.dispatch;
-			let url = window.location.href;
-			url = (url.slice(-1) !== '/') ? url + '/' : url;
-			
-			fetch(url + 'preFeedData.json').then((response) => {
+			fetch(process.env.PUBLIC_URL + '/preFeedData.json').then((response) => {
 				response.json().then(result => {
 					dispatch(loadWordsFromFile(result.predict));
 					dispatch(loadSettingsFromFile(result.settings));
