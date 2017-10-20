@@ -74,8 +74,8 @@ export default function parseText(text, options) {
 					.replace(/(?:https?|ftp):\/\/[\n\S]+/g, ' ')	// remove urls (https:// & http://)
 					.replace(/(?:www).[\n\S]+/g, ' ')	// remvove urls (www.)
 					
-					.replace(/[”“‘’«»]/g, '"')	// replace quotation marks to default: "
-					.replace(/[´`’]/g, "'")		// replace apostrophe marks to default: ' 
+					.replace(/[”“«»]/g, '"')	// replace quotation marks to default: "
+					.replace(/[´`’‘]/g, "'")		// replace apostrophe marks to default: ' 
 					.replace(/[?;!:.]/g, PHRASE_END_PUNCTUATION)	// replace sentence ending or sentence breaking marks to default phrase ending punctuation
 					.replace(/\n\s*\n/g, PHRASE_END_PUNCTUATION)	// replace double new lines to default phrase ending punctuation
 					.replace(/[,]/g, PHRASE_BREAK_PUNCTUATION);	// replace sentence break mark to default phrase breaking punctuation
