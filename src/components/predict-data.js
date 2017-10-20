@@ -23,8 +23,10 @@ class Data extends PureComponent {
 		
 		this.onSave = this.onSave.bind(this);
 		this.onLoad = this.onLoad.bind(this);
+		this.onPreFeed = this.onPreFeed.bind(this);
 	}
 	
+	// save the current state into a json file with a prefix
 	onSave() {
 		var blob = new Blob(
 			[	blobPrefix +
@@ -35,6 +37,7 @@ class Data extends PureComponent {
 		FileSaver.saveAs(blob, 'Predict_data.json');
 	}
 	
+	// load a saved state
 	onLoad() {
 		let dispatch = this.props.dispatch;
 		
@@ -53,6 +56,39 @@ class Data extends PureComponent {
 			dispatch(loadSettingsFromFile(data.settings));
         }, false);
         reader.readAsText(this.fileInput.files[0]);
+	}
+	
+	// pre feed loading handlier
+	onPreFeed() {
+		this.preLoadButton.disabled = true;
+		this.preLoadButton.setAttribute('data-txtcnt', this.preLoadButton.textContent)
+		this.preLoadButton.textContent = 'Loading...';
+		this.loadPreFeedData()
+			.then(() => {
+				this.preLoadButton.parentNode.removeChild(this.preLoadButton);
+			})
+			.catch(() => {
+				this.preLoadButton.disabled = false;
+				this.preLoadButton.textContent = this.preLoadButton.dataset.txtcnt;
+				alert('An error occured while loading the feed data, try again');
+			});
+	}
+	
+	// load the pre feed
+	async loadPreFeedData() {
+		return new Promise((resolve, reject) => {
+			let dispatch = this.props.dispatch;
+			let url = window.location.href;
+			url = (url.slice(-1) !== '/') ? url + '/' : url;
+			
+			fetch(url + 'preFeedData.json').then((response) => {
+				response.json().then(result => {
+					dispatch(loadWordsFromFile(result.predict));
+					dispatch(loadSettingsFromFile(result.settings));
+					resolve();
+				});
+			}).catch(() => reject());
+		});
 	}
 	
 	render() {
@@ -75,6 +111,15 @@ class Data extends PureComponent {
 						onChange={this.onLoad}
 					/>
 				</div>
+				<button
+					ref={button => this.preLoadButton = button}
+					style={{
+						position: 'absolute',
+						top: -44,
+						left: 0
+					}}
+					onClick={this.onPreFeed}
+				>Click here to feed ~450k words taken from some books</button>
 			</div>
 		)
 	}

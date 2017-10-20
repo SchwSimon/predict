@@ -29,66 +29,67 @@ class PredictRandom extends PureComponent {
 		const startingKeyList = Object.keys(this.props.startingWords);
 		const endingKeyList = Object.keys(this.props.endingWords);
 		
-			// the highest ending word weight
-		let endingKeyHigh = 0;
 			// calculate the average weight of the ending words
-		const endingKeyAverage = endingKeyList.map((key) => {
-			endingKeyHigh = (this.props.endingWords[key].weight > endingKeyHigh) ? this.props.endingWords[key].weight : endingKeyHigh;
-			return this.props.endingWords[key].weight;
-		}).reduce((acc, curr) => acc + curr) / endingKeyList.length;
-		
-			// if the highest ending key weight is bigger then double the average weight of the ending words
-			// add around 60% of the average weight
-			// this lowers the probability of short sentences on large word base
-		const endingKeyRange = (endingKeyHigh >= (endingKeyAverage*2)) ? endingKeyAverage + (endingKeyAverage*0.6) : endingKeyAverage;
+		// const endingKeyAverage = endingKeyList.map((key) => {
+			// return this.props.endingWords[key].weight;
+		// }).reduce((acc, curr) => acc + curr) / endingKeyList.length;
 		
 			// the starting word
 		let indexWord = startingKeyList[randomIndex(startingKeyList.length)];
 		
 			// begin the random text with the first index word as starting word
 		let randomText = indexWord.charAt(0).toUpperCase() + indexWord.substr(1);
-		
+			
+			// sentence ending probability in %
+		let endingProbability = 0;
 		for( let i = 0; ;i++ ) {
-			if (!this.props.words[indexWord])	// if the indexWord does not exist, generate another one
+				// increases the probability with each iteration
+			endingProbability++;
+			
+				// if the indexWord does not exist as leading word, generate another one
+			if (!this.props.words[indexWord])
 				indexWord = defaultKeyList[randomIndex(defaultKeyList.length)];
 			
-			//let nextWordsCount = this.props.words[indexWord].length;
-			let subKeys = Object.keys(this.props.words[indexWord]);
+				// get the possible next words
+			let possibleNextWords = Object.keys(this.props.words[indexWord]);
 				
 				// calculate the next name's average weight
-			let averageWeight = subKeys.map((subkey) => {
+			const averageWeight = possibleNextWords.map((subkey) => {
 				return this.props.words[indexWord][subkey].weight;
-			}).reduce((acc, curr) => acc + curr) / subKeys.length;
+			}).reduce((acc, curr) => acc + curr) / possibleNextWords.length;
 				
-				// get possible next words
-				// they must be weighted equal or over the average next word weight
-			let possibleNextWords = subKeys.filter((subkey) => {
+				// filter the possible next words, by having only words with 
+				// a weight higher or equal the local average
+			possibleNextWords = possibleNextWords.filter((subkey) => {
 				return this.props.words[indexWord][subkey].weight >= averageWeight
 			});
 
 				// make a sentence break if there are no possible next words
-			if (!possibleNextWords.length) {
+				// or by hitting the 5% chance
+			if (!possibleNextWords.length || Math.ceil(Math.random() * 100) > 95) {
 					// get new random starting word
 				indexWord = startingKeyList[randomIndex(startingKeyList.length)];
 				randomText += ', ' + indexWord;
 				continue;
 			}
 			
-				// get possible ending words
-				// they must be weighted equal or over the ending key range
-				// after 20 words they can also be lower than average weight
+				// get possible ending words from the possible next words
 			let possibleEnds = possibleNextWords.filter((word) => {
-				return endingKeyList.indexOf(word) > -1 && (i > 20 || this.props.endingWords[word].weight >= endingKeyRange);
+				return endingKeyList.indexOf(word) > -1;
 			});
-			
+				
+				// check if we should end the text
+				// if there are possible ending words
+				// the word count gets added to the ending probability by 1% per word
 			let isEnd;
-				// do we have good ending words?
-			if (possibleEnds.length > 0) {
+			if (possibleEnds.length && Math.ceil(Math.random() * 100) <= endingProbability+randomText.split(' ').length) {
 				isEnd = true;
-					// get a possible ending word
+
+				// get a possible ending word
 				indexWord = possibleEnds[randomIndex(possibleEnds.length)];
 			} else {
 				isEnd = false;
+				
 					// get a possible next word
 				indexWord = possibleNextWords[randomIndex(possibleNextWords.length)];
 			}
@@ -99,7 +100,7 @@ class PredictRandom extends PureComponent {
 				randomText += '.';
 				
 					// if the text contains 4 or less words, build another sentence.
-				if (randomText.split(' ').length <= 4) {
+				if (randomText.split(' ').length <= 6) {
 						// generate a new starting word
 					indexWord = startingKeyList[randomIndex(startingKeyList.length)];
 					randomText += ' ' + indexWord.charAt(0).toUpperCase() + indexWord.substr(1);
