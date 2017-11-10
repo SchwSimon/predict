@@ -39,7 +39,7 @@ describe('<Trainer />', () => {
 			stubedFetch.returns(new Promise(resolve => resolve()));
 		});
 		afterEach(() => {
-		  sinon.restore(window.fetch);
+		  stubedFetch.restore(window.fetch);
 		});
 
 		const wrapper = mount(<Trainer />);
