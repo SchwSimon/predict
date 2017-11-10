@@ -62,3 +62,5 @@ export const predict = (state = initialState.predict, action) => {
 		default: return state;
 	}
 }
+
+export default predict;

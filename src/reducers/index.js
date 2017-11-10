@@ -15,7 +15,7 @@ export const initialState = {
 			knownWords: 0
 		}
 	},
-	
+
 	settings: {
 		allowNumbers: false,
 		allowSpecials: false,
