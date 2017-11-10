@@ -20,6 +20,6 @@
   "devDependencies": {
     "enzyme": "^3.1.1",
     "enzyme-adapter-react-16": "^1.0.4",
-    "sinon": "^4.0.0"
+    "sinon": "^4.1.2"
   }
 }
