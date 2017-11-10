@@ -11,21 +11,21 @@ import {
 import '../styles/predict-data.css';
 
 
-const blobPrefix = '-Simon1991-';
+export const blobPrefix = '-Simon1991-';
 
 /*
  * Data handler
  * Save and/or restore data
  */
-class Data extends PureComponent {
+export class Data extends PureComponent {
 	constructor(props){
 		super(props);
-		
+
 		this.onSave = this.onSave.bind(this);
-		this.onLoad = this.onLoad.bind(this);
+		this.onFileChange = this.onFileChange.bind(this);
 		this.onPreFeed = this.onPreFeed.bind(this);
 	}
-	
+
 	// save the current state into a json file with a prefix
 	onSave() {
 		var blob = new Blob(
@@ -36,28 +36,34 @@ class Data extends PureComponent {
 		);
 		FileSaver.saveAs(blob, 'Predict_data.json');
 	}
-	
-	// load a saved state
-	onLoad() {
-		let dispatch = this.props.dispatch;
-		
-		const reader = new FileReader();
-        reader.addEventListener('load', function onLoad(result) {
-			this.removeEventListener('load', onLoad, false);
-			
-				// return if the file is invalid
-			if (this.result.substr(0, blobPrefix.length) !== blobPrefix)
-				return alert('Invalid file, you can only load files you got from here.');
-				
-				// maybe a trycatch block to "repair" the data in catch and try again?
-			const data = JSON.parse(this.result.substr(blobPrefix.length));
 
-			dispatch(loadWordsFromFile(data.predict));
-			dispatch(loadSettingsFromFile(data.settings));
-        }, false);
-        reader.readAsText(this.fileInput.files[0]);
+	onFileLoad(result) {
+		let dispatch = this.props.dispatch;
+
+			// return if the file is invalid
+		if (result.substr(0, blobPrefix.length) !== blobPrefix) {
+			alert('Invalid file, you can only load files you got from here.');
+			return;
+		}
+
+			// maybe a trycatch block to "repair" the data in catch and try again?
+		const data = JSON.parse(result.substr(blobPrefix.length));
+
+		dispatch(loadWordsFromFile(data.predict));
+		dispatch(loadSettingsFromFile(data.settings));
 	}
-	
+
+	// load a saved state
+	onFileChange(event) {
+		const _this = this;
+		const reader = new FileReader();
+    reader.addEventListener('load', function load() {
+			this.removeEventListener('load', load, false);
+			_this.onFileLoad(this.result);
+		}, false);
+    reader.readAsText(event.target.files[0]);
+	}
+
 	// pre feed loading handlier
 	onPreFeed() {
 		this.preLoadButton.disabled = true;
@@ -73,7 +79,7 @@ class Data extends PureComponent {
 				alert('An error occured while loading the feed data, try again');
 			});
 	}
-	
+
 	// load the pre feed
 	async loadPreFeedData() {
 		return new Promise((resolve, reject) => {
@@ -87,7 +93,7 @@ class Data extends PureComponent {
 			}).catch(() => reject());
 		});
 	}
-	
+
 	render() {
 		return (
 			<div className="Data">
@@ -101,11 +107,10 @@ class Data extends PureComponent {
 				<div className="Data-load">
 					Load
 					<input
-						ref={input => this.fileInput = input}
 						className="Data-loadInput"
 						type="file"
 						accept="application/json"
-						onChange={this.onLoad}
+						onChange={this.onFileChange}
 					/>
 				</div>
 				<button

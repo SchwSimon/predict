@@ -5,7 +5,7 @@ import Learn from './Learn';	// container
 import PredictInput from '../components/predict-input';
 import PredictRandom from '../components/predict-random';
 
-class Predict extends PureComponent {
+export class Predict extends PureComponent {
 	render() {
 		return (
 			<div>

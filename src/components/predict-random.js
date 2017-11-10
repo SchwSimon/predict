@@ -6,78 +6,77 @@ import { connect } from 'react-redux';
 
 import '../styles/predict-random.css';
 
+// random index generator for the word key lists
+export const randomIndex = (length) => Math.floor(Math.random()*length)
+
 /*
  * Random text generator based on the provided words
  */
-class PredictRandom extends PureComponent {	
+export class PredictRandom extends PureComponent {
 	constructor(props) {
 		super(props);
 
-		this.generate = this.generate.bind(this);
+		this.state = {
+			text: ''
+		};
+
+		this.onGenerate = this.onGenerate.bind(this);
 	}
-	
+
 	// generate a random text
-	generate() {
-		if (!Object.keys(this.props.words).length) return;
-		
-			// random index generator for the word key lists
-		function randomIndex(length) {
-			return Math.floor(Math.random()*length);
-		}
-		
-		const defaultKeyList = Object.keys(this.props.words);
-		const startingKeyList = Object.keys(this.props.startingWords);
-		const endingKeyList = Object.keys(this.props.endingWords);
-		
-			// calculate the average weight of the ending words
-		// const endingKeyAverage = endingKeyList.map((key) => {
-			// return this.props.endingWords[key].weight;
-		// }).reduce((acc, curr) => acc + curr) / endingKeyList.length;
-		
+	generateRandomText(wordsData = {words: {}, startingWords: {}, endingWords: {}}) {
+		const words = wordsData.words;
+		const wordsList = Object.keys(wordsData.words);
+		const startingWordsList = Object.keys(wordsData.startingWords);
+		const endingWordsList = Object.keys(wordsData.endingWords);
+
+		if (!wordsList.length || !startingWordsList.length || !endingWordsList.length)
+			return '';
+
 			// the starting word
-		let indexWord = startingKeyList[randomIndex(startingKeyList.length)];
-		
+		let indexWord = startingWordsList[randomIndex(startingWordsList.length)];
+
 			// begin the random text with the first index word as starting word
 		let randomText = indexWord.charAt(0).toUpperCase() + indexWord.substr(1);
-			
+
 			// sentence ending probability in %
 		let endingProbability = 0;
-		for( let i = 0; ;i++ ) {
+		for(let i = 0; ;i++) {
 				// increases the probability with each iteration
 			endingProbability++;
-			
+
 				// if the indexWord does not exist as leading word, generate another one
-			if (!this.props.words[indexWord])
-				indexWord = defaultKeyList[randomIndex(defaultKeyList.length)];
-			
+			if (!words[indexWord])
+				indexWord = wordsList[randomIndex(wordsList.length)];
+
 				// get the possible next words
-			let possibleNextWords = Object.keys(this.props.words[indexWord]);
-				
+			let possibleNextWords = Object.keys(words[indexWord]);
+
 				// calculate the next name's average weight
-			const averageWeight = possibleNextWords.map((subkey) => {
-				return this.props.words[indexWord][subkey].weight;
-			}).reduce((acc, curr) => acc + curr) / possibleNextWords.length;
-				
-				// filter the possible next words, by having only words with 
+			let averageWeight = possibleNextWords.map((subkey) => {
+				return words[indexWord][subkey].weight;
+			}).reduce((acc, curr) => acc + curr, 0) / possibleNextWords.length;
+
+				// filter the possible next words, by having only words with
 				// a weight higher or equal the local average
 			possibleNextWords = possibleNextWords.filter((subkey) => {
-				return this.props.words[indexWord][subkey].weight >= averageWeight
+				return words[indexWord][subkey].weight >= averageWeight
 			});
 
 				// make a sentence break if there are no possible next words
 				// or by hitting the 5% chance
 			if (!possibleNextWords.length || Math.ceil(Math.random() * 100) > 95) {
 					// get new random starting word
-				indexWord = startingKeyList[randomIndex(startingKeyList.length)];
+				indexWord = startingWordsList[randomIndex(startingWordsList.length)];
 				randomText += ', ' + indexWord;
 				continue;
 			}
-			
+
 				// get possible ending words from the possible next words
 			let possibleEnds = possibleNextWords.filter((word) => {
-				return endingKeyList.indexOf(word) > -1;
+				return endingWordsList.indexOf(word) > -1;
 			});
-				
+
 				// check if we should end the text
 				// if there are possible ending words
 				// the word count gets added to the ending probability by 1% per word
@@ -89,45 +88,59 @@ class PredictRandom extends PureComponent {
 				indexWord = possibleEnds[randomIndex(possibleEnds.length)];
 			} else {
 				isEnd = false;
-				
+
 					// get a possible next word
 				indexWord = possibleNextWords[randomIndex(possibleNextWords.length)];
 			}
 
 			randomText += ' ' + indexWord;
-			
+
 			if (isEnd) {
 				randomText += '.';
-				
+
 					// if the text contains 4 or less words, build another sentence.
 				if (randomText.split(' ').length <= 6) {
 						// generate a new starting word
-					indexWord = startingKeyList[randomIndex(startingKeyList.length)];
+					indexWord = startingWordsList[randomIndex(startingWordsList.length)];
 					randomText += ' ' + indexWord.charAt(0).toUpperCase() + indexWord.substr(1);
 					i = 0;
 					continue;
 				}
 				break;
 			}
-			
+
 			if (i > 50)	// assume endless loop, try again..
-				return this.generate();
+				return this.generate(wordsData);
 		}
-		
-		this.output.value = randomText;
+
+		return randomText;
 	}
-	
+
+	onGenerate() {
+		this.setText(
+			this.generateRandomText({
+				words: this.props.words,
+				startingWords: this.props.startingWords,
+				endingWords: this.props.endingWords
+			})
+		)
+	}
+
+	setText(text) {
+		this.setState({text: text});
+	}
+
 	render() {
 		return (
 			<div>
 				<div className="PredictRandom">
 					<button
 						className="PredictRandom-btn"
-						onClick={this.generate}
+						onClick={this.onGenerate}
 					>Generate<br/>random<br/>text
 					</button>
 					<textarea
-						ref={output => this.output = output}
+						value={this.state.text}
 						className="PredictRandom-ouput"
 						readOnly={true}
 						spellecheck="false"
@@ -140,8 +153,8 @@ class PredictRandom extends PureComponent {
 
 export default connect(
 	state => ({
+		words: state.predict.words,
 		startingWords: state.predict.startingWords,
-		endingWords: state.predict.endingWords,
-		words: state.predict.words
+		endingWords: state.predict.endingWords
 	})
 )(PredictRandom);

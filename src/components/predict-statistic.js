@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import '../styles/predict-statistic.css';
 
-class Statistic extends PureComponent {
+export class Statistic extends PureComponent {
 	render() {
 		return (
 			<div className="Statistic">

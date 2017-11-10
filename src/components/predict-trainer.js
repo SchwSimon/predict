@@ -8,87 +8,88 @@ import {
 
 import '../styles/predict-trainer.css';
 
-class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
+export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 	constructor(props) {
 		super(props);
-		
+
 		this.state = {
-			learningState: props.learningState,
+			learningState: false,
 			modalShow: false,
 			modalContent: '',
 			modalTimeout: null
 		}
-		
+
 		this.onTextLearn = this.onTextLearn.bind(this);
 		this.onUrlEnter = this.onUrlEnter.bind(this);
 		this.onFileChange = this.onFileChange.bind(this);
 		this.onModalClose = this.onModalClose.bind(this);
 	}
-	
+
 	// file change handler
-	onFileChange() {
+	onFileChange(event) {
 		const self = this;
-		
+
 			// read the file
 		const reader = new FileReader();
-        reader.addEventListener('load', function onLoad(result) {
-			this.removeEventListener('load', onLoad, false);
-			
+		reader.addEventListener('load', function load(result) {
+			this.removeEventListener('load', load, false);
+
 				// put the file's content in to the input field
 			self.putLearningText(this.result);
-        }, false);
-        reader.readAsText(this.fileInput.files[0]);
+    }, false);
+    reader.readAsText(event.target.files[0]);
 	}
-	
+
 	// learn from provided url
 	onUrlEnter(event) {
-		const url = this.urlInput.value.trim();
-		if (event.key === 'Enter' && url) {
-				// toggle the url input field
-			var toggleInput = function() {
-				this.urlInput.value = (this.urlInput.disabled) ? '' : 'Fetching website data...';
-				this.urlInput.disabled = !this.urlInput.disabled;
-			}.bind(this);
-			toggleInput();
-			
-			fetch(url).then((response) => {
-				response.text().then((result) => {
-					const vNode = document.createElement('div');
-					vNode.innerHTML = result;
-					
-					let textContent = '';
-					let liveNodeCollection = vNode.getElementsByTagName('*');
-					for( let i = 0; i < liveNodeCollection.length; i++ ) {
-							// nodes from which we do not want the content
-							// - nodes with the following tags
-							// - nodes which class name begins with "nav" probably is a navigation structure
-						if (['title','script','style','meta','link','head','iframe','noscript','img','br','a','hr'].includes(liveNodeCollection[i].tagName.toLowerCase())
-								|| liveNodeCollection[i].className.indexOf('nav') === 0) {	
-							liveNodeCollection[i].parentNode.removeChild(liveNodeCollection[i]);
-							continue;
-						}
-							// concat the node's textcontent
-						textContent += liveNodeCollection[i].textContent;
+		const url = event.target.value.trim();
+		if (event.key !== 'Enter' || !url) return;
+
+		this.toggleUrlInput();
+
+		fetch(url).then((response) => {
+			response.text().then((result) => {
+				const vNode = document.createElement('div');
+				vNode.innerHTML = result;
+
+				let textContent = '';
+				let liveNodeCollection = vNode.getElementsByTagName('*');
+				for(let i = 0; i < liveNodeCollection.length; i++) {
+						// nodes from which we do not want the content
+						// - nodes with the following tags
+						// - nodes which class name begins with "nav" probably is a navigation structure
+					if (['title','script','style','meta','link','head','iframe','noscript','img','br','a','hr'].includes(liveNodeCollection[i].tagName.toLowerCase())
+							|| liveNodeCollection[i].className.indexOf('nav') === 0) {
+						liveNodeCollection[i].parentNode.removeChild(liveNodeCollection[i]);
+						continue;
 					}
-						// put the parsed content in to the input field
-						// regex multiple spaces
-					this.putLearningText(textContent.replace(/\s+/g, ' '));
-					toggleInput();
-				})
-			}).catch((error) => {
-				toggleInput();
-					// could not fetch the url
-				this.handleModal({
-					show: true,
-					content: '"' + url.substr(0, 20) + ((url.length > 20) ? '...' : '') + '" is blocking cross-site requests.'
-				});
+						// concat the node's textcontent
+					textContent += liveNodeCollection[i].textContent;
+				}
+					// put the parsed content in to the input field
+					// regex multiple spaces
+				this.putLearningText(textContent.replace(/\s+/g, ' '));
+				this.toggleUrlInput();
 			})
-		}
+		}).catch((error) => {
+			this.toggleUrlInput();
+				// could not fetch the url
+			this.handleModal({
+				show: true,
+				content: '"' + url.substr(0, 20) + ((url.length > 20) ? '...' : '') + '" is blocking cross-site requests.'
+			});
+		});
 	}
-	
+
+	// toggle url input field
+	toggleUrlInput() {
+		this.urlInput.value = (this.urlInput.disabled) ? '' : 'Fetching website data...';
+		this.urlInput.disabled = !this.urlInput.disabled;
+	}
+
 	// request to learn the given text
-	onTextLearn() {
-		const text = this.textInput.value.trim();
+	onTextLearn(event) {
+		const text = event.target.value.trim();
 		if (!text) return;	// return if empty
 
 		this.handleModal({
@@ -104,25 +105,25 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 			this.props.dispatch(trainFromText(text, this.props.settings))
 		}, 100);
 	}
-	
+
 	// close the modal and reset the text input
 	onModalClose() {
 			// clear the modal timeout if running
 		clearTimeout(this.state.modalTimeout);
-		
+
 		this.handleModal({
 			show: false
 		});
 		this.textInput.value = '';
 	}
-	
+
 	// modal handler
 	handleModal(props) {
 		this.setState({
 			modalShow: props.show,
 			modalContent: props.content
 		});
-			
+
 			// set a timeout to close the modal
 		if (props.timeout) {
 				// clear the modal timeout if running
@@ -132,13 +133,13 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 			});
 		}
 	}
-	
+
 	// concat text to the learning text input
 	putLearningText(text) {
 		this.textInput.value += ' ' + text;
 	}
 
-	componentWillUpdate(nextProps, nextState) {
+	componentWillUpdate(nextProps) {
 		if (this.props.isLearning !== nextProps.isLearning && !nextProps.isLearning) {
 			// show the modal with a confirmation message when the learning state changes from learning to not learning
 			this.handleModal({
@@ -148,7 +149,7 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 			});
 		}
 	}
-	
+
 	render() {
 		return (
 			<div className="Trainer">
@@ -184,7 +185,6 @@ class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 					<div className="vCenterer" />
 					<input
 						className="Trainer-file-input"
-						ref={input => this.fileInput = input}
 						onChange={this.onFileChange}
 						accept="text/plain"
 						type="file"

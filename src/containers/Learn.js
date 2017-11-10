@@ -6,7 +6,7 @@ import Statistic from '../components/predict-statistic';
 import Settings from '../components/predict-settings';
 
 
-class Learn extends PureComponent {
+export class Learn extends PureComponent {
 	render() {
 		return (
 			<div style={{

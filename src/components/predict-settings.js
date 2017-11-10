@@ -6,7 +6,7 @@ import { updateSettings } from '../actions/index';
 import '../styles/predict-settings.css';
 
 	// settings with theyr corresponding view title
-const boolSettingTitles = {
+export const boolSettingTitles = {
 	allowNumbers: 'Allow numbers',
 	allowSpecials: 'Allow special characters',
 	joinQuotes: 'Include quotes',
@@ -15,19 +15,20 @@ const boolSettingTitles = {
 	joinSquareBrackets: 'Include square brackets'
 };
 
-class Settings extends PureComponent {
+export class Settings extends PureComponent {
 	constructor(props) {
 		super(props);
-		
+
 		this.state = {
-			showSettings: false
+			showSettings: false,
+			excludeText: ''
 		}
-		
+
 		this.onCheckboxChange = this.onCheckboxChange.bind(this);
-		this.onExcludeChange = this.onExcludeChange.bind(this);
+		this.onExcludeTextChange = this.onExcludeTextChange.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
 	}
-	
+
 	// on bool setting toggle
 	onCheckboxChange(event) {
 		this.props.dispatch(updateSettings({
@@ -35,39 +36,30 @@ class Settings extends PureComponent {
 			value: event.target.checked
 		}));
 	}
-	
+
 	// on exclude input change
-	onExcludeChange() {
-		const val = this.excludeInput.value.trim();
-		
-			// only for the visuals
-		if (val)
-			this.excludeInput.setAttribute('isContent', '')
-		else
-			this.excludeInput.removeAttribute('isContent');
-		
+	onExcludeTextChange(event) {
+		const excludeText = event.target.value.trim();
+
+		this.setState({excludeText: excludeText});
+
 		this.props.dispatch(updateSettings({
 			key: 'exclude',
-			value: val.split(',')
+			value: excludeText.split(',')
 		}));
 	}
-	
+
+	toggleSettings() {
+		this.setState({showSettings: !this.state.showSettings});
+	}
+
 	componentWillUpdate(nextProps) {
 		if (typeof nextProps.settings.exclude === 'string') {
 				// if file data gets loaded exclude will be passed as string
-				// to trigger the value input here
-			this.excludeInput.value = nextProps.settings.exclude;
-				// trigger onExcludeChange manually for updating the visuals
-			this.onExcludeChange();
+			this.setState({excludeText: nextProps.settings.exclude});
 		}
 	}
-	
-	toggleSettings() {
-		this.setState({
-			showSettings: !this.state.showSettings
-		})
-	}
-	
+
 	render() {
 		return (
 			<div className="Settings">
@@ -89,10 +81,11 @@ class Settings extends PureComponent {
 						);
 					})}
 					<textarea
-						ref={input => this.excludeInput = input}
+						value={this.state.excludeText}
+						onChange={this.onExcludeTextChange}
+						data-iscontent={(this.state.excludeText === '') ? false : true}
 						className="Settings-exclude"
 						placeholder="Exclude this text, for multiple excludes separate with a comma (case insensitive)"
-						onKeyUp={this.onExcludeChange}
 						spellecheck="false"
 					/>
 				</div>
