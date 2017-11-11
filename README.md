@@ -1,3 +1,5 @@
+![Travis Build](https://travis-ci.org/SchwSimon/predict.svg?branch=master)
+
 #Predict
 
 Feed app with text and it will try to
