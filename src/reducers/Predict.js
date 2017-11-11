@@ -1,14 +1,20 @@
-import { initialState } from './index';
-import {
-	TRAIN_FROM_TEXT,
-	SET_LEARNING_STATE,
-	LOAD_PREDICT_DATA
-} from '../actions/index';
-
+import { TRAIN_FROM_TEXT, SET_LEARNING_STATE, LOAD_PREDICT_DATA } from '../actions/index';
 import parseText from './predict/TextParser';
 import { assignWords, nextWordsToSortedArray, assignLeadingWords } from './predict/WordsAssigner';
 
-export const predict = (state = initialState.predict, action) => {
+export const predictInitialState = {
+	isLearning: false,		// the current learning state
+	startingWords: {},		// starting word list
+	endingWords: {},			// ending word list
+	words: {},						// word list with next words and its weight value
+	wordsWeighted: {},		// word list with sorted next words by its weight
+	statistic: {
+		inputWords: 0,
+		knownWords: 0
+	}
+};
+
+const predict = (state = predictInitialState, action) => {
 	switch(action.type) {
 		case TRAIN_FROM_TEXT: {
 				// parse the training text

@@ -1,28 +1,14 @@
-import { initialState } from '../../reducers/index';
+import { createStore } from 'redux';
+import AppStore from '../../reducers/index';
+import { predictInitialState } from '../../reducers/Predict';
+import { settingsInitialState } from '../../reducers/Settings';
 
-describe('initialState', () => {
-	it('default state', () => {
-		expect(initialState).toEqual({
-			predict: {
-				isLearning: false,
-				startingWords: {},
-				endingWords: {},
-				words: {},
-				wordsWeighted: {},
-				statistic: {
-					inputWords: 0,
-					knownWords: 0
-				}
-			},
-			settings: {
-				allowNumbers: false,
-				allowSpecials: false,
-				joinQuotes: true,
-				joinRoundBrackets: false,
-				joinCurlyBrackets: false,
-				joinSquareBrackets: false,
-				exclude: []
-			}
+describe('store', () => {
+	it('must create a correct store', () => {
+		const store = createStore(AppStore)
+		expect(store.getState()).toEqual({
+			predict: predictInitialState,
+			settings: settingsInitialState
 		});
   });
 });

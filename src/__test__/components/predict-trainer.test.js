@@ -79,7 +79,7 @@ describe('<Trainer />', () => {
 
 	describe('function onTextLearn()', () => {
 		const dispatch = sinon.spy();
-		const wrapper = shallow(<Trainer dispatch={dispatch} />);
+		const wrapper = mount(<Trainer dispatch={dispatch} />);
 		const button = wrapper.find('.Trainer-head-learnBtn');
 		sinon.spy(wrapper.instance(), 'handleModal')
 
@@ -88,18 +88,20 @@ describe('<Trainer />', () => {
 			content: 'Learning text...'
 		};
 
-		it('return on empty input', () => {
-			button.simulate('click', {target: {value: ''}});
+		it('return on empty text input', () => {
+			wrapper.instance().textInput.value = '';
+			button.simulate('click');
 			expect(wrapper.instance().handleModal.calledWith(modalArg)).toBeFalsy();
 		});
 
-		it('trigger handleModal() on non empty click', () => {
-			button.simulate('click', {target: {value: 'test'}})
+		it('trigger handleModal() on non empty text input', () => {
+			wrapper.instance().textInput.value = 'text';
+			button.simulate('click')
 			expect(wrapper.instance().handleModal.calledWith(modalArg)).toBeTruthy();
 		});
 
 		it('trigger disptach', () => {
-			button.simulate('click', {target: {value: 'test'}})
+			button.simulate('click')
 			expect(dispatch.called).toBeTruthy();
 		});
 	});

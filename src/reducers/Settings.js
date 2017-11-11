@@ -1,11 +1,19 @@
-import { initialState } from './index';
-
 import {
 	UPDATE_SETTINGS,
 	LOAD_SETTINGS_DATA
 } from '../actions/index';
 
-export const settings = (state = initialState.settings, action) => {
+export const settingsInitialState = {
+	allowNumbers: false,
+	allowSpecials: false,
+	joinQuotes: true,
+	joinRoundBrackets: false,
+	joinCurlyBrackets: false,
+	joinSquareBrackets: false,
+	exclude: []
+};
+
+const settings = (state = settingsInitialState, action) => {
 	switch(action.type) {
 		case UPDATE_SETTINGS:
 			return Object.assign({}, state, {

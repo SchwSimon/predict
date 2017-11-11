@@ -1,10 +1,19 @@
-import { settings } from '../../reducers/Settings';
-import { initialState } from '../../reducers/index';
+import settings, { settingsInitialState } from '../../reducers/Settings';
 import { UPDATE_SETTINGS, LOAD_SETTINGS_DATA } from '../../actions/index';
 
-const settingsInitialState = initialState.settings;
-
 describe('reducer: settings', () => {
+	it('initial state', () => {
+		expect(settingsInitialState).toEqual({
+			allowNumbers: false,
+			allowSpecials: false,
+			joinQuotes: true,
+			joinRoundBrackets: false,
+			joinCurlyBrackets: false,
+			joinSquareBrackets: false,
+			exclude: []
+		});
+  });
+
 	it('return initialState on default action', () => {
 		expect(settings(undefined, {type: null})).toEqual(settingsInitialState);
   });

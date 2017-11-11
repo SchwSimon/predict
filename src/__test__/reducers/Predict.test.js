@@ -1,12 +1,23 @@
-import { predict } from '../../reducers/Predict';
-import { initialState } from '../../reducers/index';
+import predict, { predictInitialState } from '../../reducers/Predict';
 import { TRAIN_FROM_TEXT, SET_LEARNING_STATE, LOAD_PREDICT_DATA } from '../../actions/index';
 import { parseText } from '../../reducers/predict/TextParser';
 import { assignWords, nextWordsToSortedArray, assignLeadingWords } from '../../reducers/predict/WordsAssigner';
 
-const predictInitialState = initialState.predict;
-
 describe('reducer: predict', () => {
+	it('initial state', () => {
+		expect(predictInitialState).toEqual({
+			isLearning: false,
+			startingWords: {},
+			endingWords: {},
+			words: {},
+			wordsWeighted: {},
+			statistic: {
+				inputWords: 0,
+				knownWords: 0
+			}
+		});
+  });
+
 	it('return initialState on default action', () => {
 		expect(predict(undefined, {type: null})).toEqual(predictInitialState);
   });

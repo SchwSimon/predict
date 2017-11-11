@@ -1,10 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
-import {
-	trainFromText,
-	setLearningState
-} from '../actions/index';
+import { trainFromText, setLearningState } from '../actions/index';
 
 import '../styles/predict-trainer.css';
 
@@ -88,8 +84,8 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 	}
 
 	// request to learn the given text
-	onTextLearn(event) {
-		const text = event.target.value.trim();
+	onTextLearn() {
+		const text = this.textInput.value.trim();
 		if (!text) return;	// return if empty
 
 		this.handleModal({
