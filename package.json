@@ -14,7 +14,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom --setupTestFrameworkScriptFile=raf/polyfill",
+    "test": "react-scripts test --env=jsdom --setupTestFrameworkScriptFile=raf/polyfill --no-optional",
     "eject": "react-scripts eject"
   },
   "devDependencies": {
