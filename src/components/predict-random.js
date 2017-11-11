@@ -51,16 +51,17 @@ export class PredictRandom extends PureComponent {
 
 				// get the possible next words
 			let possibleNextWords = Object.keys(words[indexWord]);
+			let nextWords = words[indexWord];
 
 				// calculate the next name's average weight
 			let averageWeight = possibleNextWords.map((subkey) => {
-				return words[indexWord][subkey].weight;
+				return nextWords[subkey].weight;
 			}).reduce((acc, curr) => acc + curr, 0) / possibleNextWords.length;
 
 				// filter the possible next words, by having only words with
 				// a weight higher or equal the local average
 			possibleNextWords = possibleNextWords.filter((subkey) => {
-				return words[indexWord][subkey].weight >= averageWeight
+				return nextWords[subkey].weight >= averageWeight
 			});
 
 				// make a sentence break if there are no possible next words
