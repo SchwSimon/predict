@@ -79,48 +79,33 @@ describe('<PredictInput />', () => {
   });
 
 	describe('functionality', () => {
-		describe('function setWord()', () => {
-			it('must set the correct state', () => {
-				wrapper.instance().setWord('word');
-				expect(wrapper.state().word).toBe('word');
-			});
-		});
-
 		describe('function onInputChange()', () => {
 			const value = ' VALUE ';
-			const setWordStub = sinon.stub(wrapper.instance(), 'setWord');
 			wrapper.find('.PredictInput-input').simulate('change', {
 				target: {value: value}
 			});
-			const stateValue = wrapper.state().value;
-			setWordStub.restore();
+			const state = Object.assign({}, wrapper.state());
 
 			it('must set the correct state', () => {
-				expect(stateValue).toBe(value);
-			});
-
-			it('must trigger setWord with args', () => {
-				const parsedValue = value.trim().replace(/\n(?=[^\n]*$)/, ' ');
-				expect(setWordStub.calledWith(
-					parsedValue.slice(-parsedValue.length + parsedValue.lastIndexOf(' ')+1).toLowerCase()
-				)).toBeTruthy();
+				const lastWord = value.trim().replace(/\n(?=[^\n]*$)/, ' ');
+				expect(state).toEqual({
+					value: value,
+					word: lastWord.slice(-lastWord.length + lastWord.lastIndexOf(' ')+1).toLowerCase()
+				});
 			});
 		});
 
 		describe('function onWordSelect()', () => {
 			const prevValue = 'prevValue';
 			const word = 'word';
-			const setWordStub = sinon.stub(wrapper.instance(), 'setWord');
 			wrapper.state().value = prevValue;
 			wrapper.instance().onWordSelect(word);
-			setWordStub.restore();
 
 			it('must set the correct state', () => {
-				expect(wrapper.state().value).toBe(prevValue.replace(/ +$/g,"") + ' ' + word + ' ');
-			});
-
-			it('must trigger setWord with args', () => {
-				expect(setWordStub.calledWith(word)).toBeTruthy();
+				expect(wrapper.state()).toEqual({
+					value: prevValue.replace(/ +$/g,"") + ' ' + word + ' ',
+					word: word
+				});
 			});
 		});
 	});

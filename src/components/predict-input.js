@@ -51,23 +51,20 @@ export class PredictInput extends PureComponent {
 		this.state = {
 			value: '',
 			word: ''	// the current last word
-		}
+		};
 
 		this.onInputChange = this.onInputChange.bind(this);
 		this.onWordSelect = this.onWordSelect.bind(this);
 	}
 
-	setWord(word) {
-		this.setState({word: word});
-	}
-
 	// on text input change handler
 	onInputChange(event) {
-		this.setState({value: event.target.value});
-
 			// trim and replace the last occurence of a newline with ' '
 		const inputText = event.target.value.trim().replace(/\n(?=[^\n]*$)/, ' ');
-		this.setWord(inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1).toLowerCase())
+		this.setState({
+			value: event.target.value,
+			word: inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1).toLowerCase()
+		});
 	}
 
 	// inject the selected word
@@ -75,9 +72,9 @@ export class PredictInput extends PureComponent {
 		// remove the whitespace at the end of the string
 		// concat the selected word with a leading & trailing whitespace
 		this.setState(prevState => ({
-			value: prevState.value.replace(/ +$/g,"") + ' ' + word + ' '
+			value: prevState.value.replace(/ +$/g,"") + ' ' + word + ' ',
+			word: word
 		}));
-		this.setWord(word);
 	}
 
 	render() {

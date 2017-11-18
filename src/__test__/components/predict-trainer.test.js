@@ -160,7 +160,7 @@ describe('<Trainer />', () => {
 
 		describe('function onTextLearn()', () => {
 			const handleModalStub = sinon.stub(wrapper.instance(), 'handleModal');
-			wrapper.state().text = 'value';
+			wrapper.state().text = ' value ';
 			wrapper.find('.Trainer-head-learnBtn').simulate('click');
 			handleModalStub.restore();
 

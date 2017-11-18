@@ -39,7 +39,7 @@ export class Trainer extends PureComponent {
 	}
 
 	onTextChange(event) {
-		this.setState({text: event.target.value.trim()});
+		this.setState({text: event.target.value});
 	}
 
 	onUrlChange(event) {
@@ -118,7 +118,8 @@ export class Trainer extends PureComponent {
 
 	// request to learn the given text
 	onTextLearn() {
-		if (!this.state.text) return;	// return if empty
+		const text = this.state.text.trim();
+		if (!text) return;	// return if empty
 
 		this.handleModal({
 			show: true,
@@ -126,7 +127,7 @@ export class Trainer extends PureComponent {
 		});
 
 		this.props.dispatch(setLearningState(true));
-		this.props.dispatch(trainFromText(this.state.text, this.props.settings))
+		this.props.dispatch(trainFromText(text, this.props.settings))
 	}
 
 	// close the modal and reset the text input
