@@ -4,70 +4,87 @@ import { trainFromText, setLearningState } from '../actions/index';
 
 import '../styles/predict-trainer.css';
 
-export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
+export class Trainer extends PureComponent {
 	constructor(props) {
 		super(props);
 
 		this.state = {
+			text: '',
 			learningState: false,
 			modalShow: false,
 			modalContent: '',
-			modalTimeout: null
+			modalTimeout: null,
+			urlInput: {
+				value: '',
+				disabled: false
+			}
 		}
 
-		this.onTextLearn = this.onTextLearn.bind(this);
+		this.onTextChange = this.onTextChange.bind(this);
+		this.onUrlChange = this.onUrlChange.bind(this);
 		this.onUrlEnter = this.onUrlEnter.bind(this);
+		this.onTextLearn = this.onTextLearn.bind(this);
 		this.onFileChange = this.onFileChange.bind(this);
 		this.onModalClose = this.onModalClose.bind(this);
 	}
 
-	// file change handler
-	onFileChange(event) {
-		const self = this;
+	componentWillUpdate(nextProps) {
+			// show the modal with a confirmation message when the learning state changes from learning to not learning
+		if (this.props.isLearning !== nextProps.isLearning && !nextProps.isLearning)
+			this.handleModal({
+				show: true,
+				content: 'Text learned !',
+				timeout: 2000
+			});
+	}
 
-			// read the file
-		const reader = new FileReader();
-		reader.addEventListener('load', function load(result) {
-			this.removeEventListener('load', load, false);
+	onTextChange(event) {
+		this.setState({text: event.target.value.trim()});
+	}
 
-				// put the file's content in to the input field
-			self.putLearningText(this.result);
-    }, false);
-    reader.readAsText(event.target.files[0]);
+	onUrlChange(event) {
+		const value = event.target.value;
+		this.setState(prevState => ({
+			urlInput: Object.assign({}, prevState, {
+				value: value
+			})
+		}));
 	}
 
 	// learn from provided url
 	onUrlEnter(event) {
-		const url = event.target.value.trim();
+		const url = this.state.urlInput.value;
 		if (event.key !== 'Enter' || !url) return;
 
 		this.toggleUrlInput();
 
-		fetch(url).then((response) => {
-			response.text().then((result) => {
-				const vNode = document.createElement('div');
-				vNode.innerHTML = result;
+		fetch(url)
+			.then((response) => {
+				response.text().then((result) => {
+					const vNode = document.createElement('div');
+					vNode.innerHTML = result;
 
-				let textContent = '';
-				let liveNodeCollection = vNode.getElementsByTagName('*');
-				for(let i = 0; i < liveNodeCollection.length; i++) {
-						// nodes from which we do not want the content
-						// - nodes with the following tags
-						// - nodes which class name begins with "nav" probably is a navigation structure
-					if (['title','script','style','meta','link','head','iframe','noscript','img','br','a','hr'].includes(liveNodeCollection[i].tagName.toLowerCase())
-							|| liveNodeCollection[i].className.indexOf('nav') === 0) {
-						liveNodeCollection[i].parentNode.removeChild(liveNodeCollection[i]);
-						continue;
+					let textContent = '';
+					let liveNodeCollection = vNode.getElementsByTagName('*');
+					for(let i = 0; i < liveNodeCollection.length; i++) {
+							// nodes from which we do not want the content
+							// - nodes with the following tags
+							// - nodes which class name begins with "nav" probably is a navigation structure
+						if (['title','script','style','meta','link','head','iframe','noscript','img','br','a','hr'].includes(liveNodeCollection[i].tagName.toLowerCase())
+								|| liveNodeCollection[i].className.indexOf('nav') === 0) {
+							liveNodeCollection[i].parentNode.removeChild(liveNodeCollection[i]);
+							continue;
+						}
+							// concat the node's textcontent
+						textContent += liveNodeCollection[i].textContent;
 					}
-						// concat the node's textcontent
-					textContent += liveNodeCollection[i].textContent;
-				}
-					// put the parsed content in to the input field
-					// regex multiple spaces
-				this.putLearningText(textContent.replace(/\s+/g, ' '));
-				this.toggleUrlInput();
+						// put the parsed content in to the input field
+						// regex multiple spaces
+					this.putLearningText(textContent.replace(/\s+/g, ' '));
+					this.toggleUrlInput();
+				})
 			})
-		}).catch((error) => {
+		.catch(() => {
 			this.toggleUrlInput();
 				// could not fetch the url
 			this.handleModal({
@@ -79,27 +96,37 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 
 	// toggle url input field
 	toggleUrlInput() {
-		this.urlInput.value = (this.urlInput.disabled) ? '' : 'Fetching website data...';
-		this.urlInput.disabled = !this.urlInput.disabled;
+		this.setState(prevState => ({
+			urlInput: {
+				value: (prevState.urlInput.disabled) ? '' : 'Fetching website data...',
+				disabled: !prevState.urlInput.disabled
+			}
+		}));
+	}
+
+	// file change handler
+	onFileChange(event) {
+		const _this = this;
+		const reader = new FileReader();
+		reader.addEventListener('load', function onFileLoad(result) {
+			this.removeEventListener('load', onFileLoad, false);
+				// put the file's content in to the input field
+			_this.putLearningText(this.result);
+    }, false);
+    reader.readAsText(event.target.files[0]);
 	}
 
 	// request to learn the given text
 	onTextLearn() {
-		const text = this.textInput.value.trim();
-		if (!text) return;	// return if empty
+		if (!this.state.text) return;	// return if empty
 
 		this.handleModal({
 			show: true,
 			content: 'Learning text...'
 		});
-			// set the learning state to true
+
 		this.props.dispatch(setLearningState(true));
-			// timeout to force the second dispatch to not be in the same frame
-			// so the component can update the learning state
-			// before setting the learning state back to default (as this can happen to quick for the component to update learning state twice)
-		setTimeout(() => {
-			this.props.dispatch(trainFromText(text, this.props.settings))
-		}, 100);
+		this.props.dispatch(trainFromText(this.state.text, this.props.settings))
 	}
 
 	// close the modal and reset the text input
@@ -110,7 +137,7 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 		this.handleModal({
 			show: false
 		});
-		this.textInput.value = '';
+		this.setState({text: ''});
 	}
 
 	// modal handler
@@ -132,18 +159,9 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 
 	// concat text to the learning text input
 	putLearningText(text) {
-		this.textInput.value += ' ' + text;
-	}
-
-	componentWillUpdate(nextProps) {
-		if (this.props.isLearning !== nextProps.isLearning && !nextProps.isLearning) {
-			// show the modal with a confirmation message when the learning state changes from learning to not learning
-			this.handleModal({
-				show: true,
-				content: 'Text learned !',
-				timeout: 2000
-			});
-		}
+		this.setState(prevState => ({
+			text: prevState.text + ' ' + text
+		}));
 	}
 
 	render() {
@@ -157,11 +175,11 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 				>Learn!</button>
 				<textarea
 					className="Trainer-text-input onInputFocus"
-					ref={input => this.textInput = input}
 					spellecheck="false"
+					value={this.state.text}
+					onChange={this.onTextChange}
 				/>
 				<div
-					ref={modal => this.modal = modal}
 					className="Trainer-text-modal"
 					style={{
 						display: this.state.modalShow ? 'block' : 'none'
@@ -188,7 +206,9 @@ export class Trainer extends PureComponent {			// MAKE URL LOADING STATE !
 				</div>
 				<input
 					className="Trainer-url-input"
-					ref={input => this.urlInput = input}
+					value={this.state.urlInput.value}
+					disabled={this.state.urlInput.disabled}
+					onChange={this.onUrlChange}
 					onKeyDown={this.onUrlEnter}
 					placeholder="Get URL text (press enter)"
 					type="text"

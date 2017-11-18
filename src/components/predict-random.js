@@ -1,6 +1,5 @@
 // TODO:	tweak endingKeyRange
 //				on large word base the probability of short sentences is still quite high
-
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
@@ -110,7 +109,7 @@ export class PredictRandom extends PureComponent {
 				break;
 			}
 
-			if (i > 50)	// assume endless loop, try again..
+			if (i > 50)	// assume endless loop for whatever reason..., try again..
 				return this.generate(wordsData);
 		}
 

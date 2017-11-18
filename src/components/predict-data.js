@@ -1,17 +1,11 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
 import FileSaver from 'file-saver';
-
-import {
-	loadWordsFromFile,
-	loadSettingsFromFile
-} from '../actions/index';
+import { loadWordsFromFile, loadSettingsFromFile } from '../actions/index';
 
 import '../styles/predict-data.css';
 
-
-export const blobPrefix = '-Simon1991-';
+export const FILE_PREFIX = '-Simon1991-';
 
 /*
  * Data handler
@@ -21,6 +15,17 @@ export class Data extends PureComponent {
 	constructor(props){
 		super(props);
 
+		this.state = {
+			preLoadButton: {
+				show: true,
+				disabled: false,
+				content: {
+					default: 'Click here to feed ~2.7million words taken from 25 popular books',
+					loading: 'Loading...'
+				}
+			}
+		};
+
 		this.onSave = this.onSave.bind(this);
 		this.onFileChange = this.onFileChange.bind(this);
 		this.onPreFeed = this.onPreFeed.bind(this);
@@ -28,26 +33,24 @@ export class Data extends PureComponent {
 
 	// save the current state into a json file with a prefix
 	onSave() {
-		var blob = new Blob(
-			[	blobPrefix +
-				JSON.stringify(this.props.state)
-			],
-			{type: 'text/plain;charset=utf-8'}
+		FileSaver.saveAs(
+			new Blob(
+				[FILE_PREFIX + JSON.stringify(this.props.state)],
+				{type: 'text/plain;charset=utf-8'}
+			),
+			'Predict_data.json'
 		);
-		FileSaver.saveAs(blob, 'Predict_data.json');
 	}
 
 	onFileLoad(result) {
 		let dispatch = this.props.dispatch;
 
 			// return if the file is invalid
-		if (result.substr(0, blobPrefix.length) !== blobPrefix) {
-			alert('Invalid file, you can only load files you got from here.');
-			return;
-		}
+		if (result.substr(0, FILE_PREFIX.length) !== FILE_PREFIX)
+			return alert('Invalid file, you can only load files you got from here.');
 
 			// maybe a trycatch block to "repair" the data in catch and try again?
-		const data = JSON.parse(result.substr(blobPrefix.length));
+		const data = JSON.parse(result.substr(FILE_PREFIX.length));
 
 		dispatch(loadWordsFromFile(data.predict));
 		dispatch(loadSettingsFromFile(data.settings));
@@ -57,8 +60,8 @@ export class Data extends PureComponent {
 	onFileChange(event) {
 		const _this = this;
 		const reader = new FileReader();
-    reader.addEventListener('load', function load() {
-			this.removeEventListener('load', load, false);
+    reader.addEventListener('load', function onFileLoad() {
+			this.removeEventListener('load', onFileLoad, false);
 			_this.onFileLoad(this.result);
 		}, false);
     reader.readAsText(event.target.files[0]);
@@ -66,16 +69,25 @@ export class Data extends PureComponent {
 
 	// pre feed loading handlier
 	onPreFeed() {
-		this.preLoadButton.disabled = true;
-		this.preLoadButton.setAttribute('data-txtcnt', this.preLoadButton.textContent)
-		this.preLoadButton.textContent = 'Loading...';
+		this.setState(prevState => ({
+			preLoadButton: Object.assign({}, prevState.preLoadButton, {
+				disabled: true
+			})
+		}));
 		this.loadPreFeedData()
 			.then(() => {
-				this.preLoadButton.parentNode.removeChild(this.preLoadButton);
+				this.setState(prevState => ({
+					preLoadButton: Object.assign({}, prevState.preLoadButton, {
+						show: false
+					})
+				}));
 			})
 			.catch(() => {
-				this.preLoadButton.disabled = false;
-				this.preLoadButton.textContent = this.preLoadButton.dataset.txtcnt;
+				this.setState(prevState => ({
+					preLoadButton: Object.assign({}, prevState.preLoadButton, {
+						disabled: false
+					})
+				}));
 				alert('An error occured while loading the feed data, try again');
 			});
 	}
@@ -83,14 +95,15 @@ export class Data extends PureComponent {
 	// load the pre feed
 	async loadPreFeedData() {
 		return new Promise((resolve, reject) => {
-			let dispatch = this.props.dispatch;
-			fetch(process.env.PUBLIC_URL + '/preFeedData.json').then((response) => {
-				response.json().then(result => {
-					dispatch(loadWordsFromFile(result.predict));
-					dispatch(loadSettingsFromFile(result.settings));
-					resolve();
-				});
-			}).catch(() => reject());
+			const dispatch = this.props.dispatch;
+			fetch(process.env.PUBLIC_URL + '/preFeedData.json')
+				.then(response => {
+					response.json().then(result => {
+						dispatch(loadWordsFromFile(result.predict));
+						dispatch(loadSettingsFromFile(result.settings));
+						resolve();
+					});
+				})
 		});
 	}
 
@@ -113,15 +126,19 @@ export class Data extends PureComponent {
 						onChange={this.onFileChange}
 					/>
 				</div>
-				<button
-					ref={button => this.preLoadButton = button}
-					style={{
-						position: 'absolute',
-						top: -44,
-						left: 0
-					}}
-					onClick={this.onPreFeed}
-				>Click here to feed ~2.7million words taken from 25 popular books</button>
+				{this.state.preLoadButton.show &&
+					<button
+						disabled={this.state.preLoadButton.disabled}
+						style={{
+							position: 'absolute',
+							top: -44,
+							left: 0
+						}}
+						onClick={this.onPreFeed}
+					>{this.state.preLoadButton.disabled
+						? this.state.preLoadButton.content.loading
+							: this.state.preLoadButton.content.default}</button>
+				}
 			</div>
 		)
 	}

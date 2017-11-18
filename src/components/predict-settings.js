@@ -1,12 +1,11 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
 import { updateSettings } from '../actions/index';
 
 import '../styles/predict-settings.css';
 
 	// settings with theyr corresponding view title
-export const boolSettingTitles = {
+export const SETTING_TITLES = {
 	allowNumbers: 'Allow numbers',
 	allowSpecials: 'Allow special characters',
 	joinQuotes: 'Include quotes',
@@ -27,6 +26,12 @@ export class Settings extends PureComponent {
 		this.onCheckboxChange = this.onCheckboxChange.bind(this);
 		this.onExcludeTextChange = this.onExcludeTextChange.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
+	}
+
+	componentWillUpdate(nextProps) {
+			// if file data gets loaded exclude will be passed as string
+		if (typeof nextProps.settings.exclude === 'string')
+			this.setState({excludeText: nextProps.settings.exclude});
 	}
 
 	// on bool setting toggle
@@ -53,24 +58,17 @@ export class Settings extends PureComponent {
 		this.setState({showSettings: !this.state.showSettings});
 	}
 
-	componentWillUpdate(nextProps) {
-		if (typeof nextProps.settings.exclude === 'string') {
-				// if file data gets loaded exclude will be passed as string
-			this.setState({excludeText: nextProps.settings.exclude});
-		}
-	}
-
 	render() {
 		return (
 			<div className="Settings">
 				<div className={'Settings-main' + ((this.state.showSettings) ? ' Settings-show' : '')}>
-					{Object.keys(boolSettingTitles).map((key, index) => {
+					{Object.keys(SETTING_TITLES).map((key, index) => {
 						return (
 							<div
 								className={'Settings-btn ' + ((this.props.settings[key]) ? 'true' : 'false')}
 								key={index}
 							>
-								{boolSettingTitles[key]}
+								{SETTING_TITLES[key]}
 								<input
 									className="Settings-checkbox"
 									type="checkbox"

@@ -7,9 +7,10 @@ import '../styles/predict-input.css';
  * Return a Predict word
  */
 export const PredictionWord = (props) => (
-	<div onClick={event => props.onWordSelect(event.target.textContent)}
-	>{props.word}</div>
-)
+	<div onClick={event => props.onWordSelect(event.target.textContent)}>
+		{props.word}
+	</div>
+);
 
 /*
  * Returns a list of possible predict words
@@ -63,9 +64,9 @@ export class PredictInput extends PureComponent {
 	// on text input change handler
 	onInputChange(event) {
 		this.setState({value: event.target.value});
-			// trim and replace the last occurence of a newline with ' '
-		let inputText = event.target.value.trim().replace(/\n(?=[^\n]*$)/, ' ');
 
+			// trim and replace the last occurence of a newline with ' '
+		const inputText = event.target.value.trim().replace(/\n(?=[^\n]*$)/, ' ');
 		this.setWord(inputText.slice(-inputText.length + inputText.lastIndexOf(' ')+1).toLowerCase())
 	}
 
@@ -73,7 +74,7 @@ export class PredictInput extends PureComponent {
 	onWordSelect(word) {
 		// remove the whitespace at the end of the string
 		// concat the selected word with a leading & trailing whitespace
-		this.setState((prevState) => ({
+		this.setState(prevState => ({
 			value: prevState.value.replace(/ +$/g,"") + ' ' + word + ' '
 		}));
 		this.setWord(word);
@@ -85,8 +86,8 @@ export class PredictInput extends PureComponent {
 				<div className="PredictInput">
 					<div className="PredictInput-label">Write something here.<br/>If you have fed enough words, it will predict you some possible words you may want to write next.</div>
 					<textarea
-						value={this.state.value}
 						className="PredictInput-input onInputFocus"
+						value={this.state.value}
 						onChange={this.onInputChange}
 						spellecheck="false"
 					/>

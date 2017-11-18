@@ -2,12 +2,11 @@ import React from 'react';
 import Enzyme, { shallow } from 'enzyme';
 import sinon from 'sinon';
 import Adapter from 'enzyme-adapter-react-16';
-
-Enzyme.configure({ adapter: new Adapter() });
-
 import { PredictRandom, randomIndex } from '../../components/predict-random';
 import { parseText } from '../../reducers/predict/TextParser';
 import { assignWords, nextWordsToSortedArray, assignLeadingWords } from '../../reducers/predict/WordsAssigner';
+
+Enzyme.configure({ adapter: new Adapter() });
 
 describe('function randomIndex()', () => {
 	it('must return 0', () => {
@@ -24,56 +23,99 @@ describe('function randomIndex()', () => {
 });
 
 describe('<PredictRandom />', () => {
-	const wrapper = shallow(<PredictRandom words={{}} startingWords={{}} endingWords={{}}/>);
+	const props = {
+		words: {},
+		startingWords: {},
+		endingWords: {}
+	}
+	const wrapper = shallow(<PredictRandom {...props} />);
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
 
-	describe('interation', () => {
-		it('must trigger onGenerate() -> generateRandomText() -> setText()', () => {
-			sinon.spy(PredictRandom.prototype, 'generateRandomText');
-			sinon.spy(PredictRandom.prototype, 'setText');
-
-			wrapper.find('.PredictRandom-btn').simulate('click');
-
-			expect(PredictRandom.prototype.generateRandomText.called).toBeTruthy();
-			expect(PredictRandom.prototype.setText.called).toBeTruthy();
+	it('default state', () => {
+		expect(wrapper.state()).toEqual({
+			text: ''
 		});
-	});
+  });
 
-	describe('function setText()', () => {
-		it('must set the state correctly', () => {
-			wrapper.instance().setText('Set Text')
-			expect(wrapper.state('text')).toBe('Set Text')
-		});
-	});
+	describe('functionality', () => {
+		describe('function generateRandomText()', () => {
+			it('must return empty string on 0 words', () => {
+				expect(wrapper.instance().generateRandomText({
+					words: {},
+					startingWords: {a:''},
+					endingWords: {b:''}
+				})).toBe('');
+			});
 
-	describe('function generateRandomText()', () => {
-		it('must return empty string on 0 args or empty object(s)', () => {
-			expect(wrapper.instance().generateRandomText()).toBe('');
-		});
+			it('must return empty string on 0 starting words', () => {
+				expect(wrapper.instance().generateRandomText({
+					words: {a:''},
+					startingWords: {},
+					endingWords: {b:''}
+				})).toBe('');
+			});
 
-		const textData = parseText('Start middle ending.');
-		const randomData = {
-			words: assignWords(textData.words).words,
-			startingWords: assignLeadingWords(textData.starting),
-			endingWords: assignLeadingWords(textData.ending)
-		};
-		const randomMatch = (match, substrArgs) => {
-			for(let i = 0; i < 100; i++) {
-				if (match !== wrapper.instance().generateRandomText(randomData).substr(...substrArgs))
-					return false;
+			it('must return empty string on 0 endingwords', () => {
+				expect(wrapper.instance().generateRandomText({
+					words: {a:''},
+					startingWords: {b:''},
+					endingWords: {}
+				})).toBe('');
+			});
+
+
+			const randomMatch = (match, substrArgs) => {
+				for(let i = 0; i < 100; i++) {
+					if (match !== wrapper.instance().generateRandomText(randomData).substr(...substrArgs))
+						return false;
+				}
+				return true;
 			}
-			return true;
-		}
 
-		it('must always return the same starting word', () => {
-			expect(randomMatch('Start', [0, 5])).toBe(true);
+			it('must contain each word atleast once', () => {
+				const parsed = parseText('Start middle ending.');
+				const data = {
+					words: assignWords(parsed.words).words,
+					startingWords: assignLeadingWords(parsed.starting),
+					endingWords: assignLeadingWords(parsed.ending)
+				};
+				const randomText = wrapper.instance().generateRandomText(data);
+				expect(randomText).toMatch(/Start/);
+				expect(randomText).toMatch(/middle/);
+				expect(randomText).toMatch(/ending/);
+				expect(randomText).toMatch(/\./);
+			});
 		});
 
-		it('must always return the same ending word', () => {
-			expect(randomMatch('ending.', [-7])).toBe(true);
+		describe('function onGenerate()', () => {
+			const setTextStub = sinon.stub(wrapper.instance(), 'setText');
+			const generateRandomTextStub = sinon.stub(wrapper.instance(), 'generateRandomText')
+				.returns(123);
+			wrapper.find('.PredictRandom-btn').simulate('click');
+			setTextStub.restore();
+			generateRandomTextStub.restore();
+
+			it('must trigger setText with args', () => {
+				expect(setTextStub.calledWith(123)).toBeTruthy();
+			});
+
+			it('must trigger generateRandomText with args', () => {
+				expect(generateRandomTextStub.calledWith({
+					words: props.words,
+					startingWords: props.startingWords,
+					endingWords: props.endingWords
+				})).toBeTruthy();
+			});
+		});
+
+		describe('function setText()', () => {
+			it('must set the state correctly', () => {
+				wrapper.instance().setText('text')
+				expect(wrapper.state().text).toBe('text')
+			});
 		});
 	});
 });

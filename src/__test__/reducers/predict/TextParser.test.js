@@ -1,12 +1,6 @@
-import {
-	PHRASE_END_PUNCTUATION,
-	PHRASE_BREAK_PUNCTUATION,
-	extractMarkedPhrases,
-	excludeText,
-	sanitizeTextBeforeExtract,
-	sanitizeTextAfterExtract,
-	parseText
-} from '../../../reducers/predict/TextParser';
+import { PHRASE_END_PUNCTUATION, PHRASE_BREAK_PUNCTUATION,
+ extractMarkedPhrases, excludeText, sanitizeTextBeforeExtract,
+ sanitizeTextAfterExtract, parseText } from '../../../reducers/predict/TextParser';
 
 describe('constants', () => {
 	it('PHRASE_END_PUNCTUATION must be "."', () => {

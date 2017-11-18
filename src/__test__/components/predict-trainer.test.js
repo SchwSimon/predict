@@ -1,195 +1,226 @@
 import React from 'react';
-import Enzyme, { shallow, mount } from 'enzyme';
+import Enzyme, { shallow } from 'enzyme';
 import sinon from 'sinon';
 import Adapter from 'enzyme-adapter-react-16';
+import { Trainer } from '../../components/predict-trainer';
+import { trainFromText, setLearningState } from '../../actions/index';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-import { Trainer } from '../../components/predict-trainer';
-
 describe('<Trainer />', () => {
-	const wrapper = shallow(<Trainer />);
+	const dispatchSpy = sinon.spy();
+	const props = {
+		dispatch: dispatchSpy,
+		isLearning: true,
+		settings: 'settings'
+	};
+	const wrapper = shallow(<Trainer {...props} />);
+	const defaultState = Object.assign({}, wrapper.state());
+	defaultState.urlInput = Object.assign({}, wrapper.state().urlInput);
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
 
 	it('default state', () => {
-		expect(wrapper.state()).toEqual({
+		expect(defaultState).toEqual({
+			text: '',
 			learningState: false,
 			modalShow: false,
 			modalContent: '',
-			modalTimeout: null
+			modalTimeout: null,
+			urlInput: {
+				value: '',
+				disabled: false
+			}
 		});
   });
 
-	describe('function onFileChange()', () => {
-		it('must trigger FileReader\' readAsText with the file', () => {
-			const blob = new Blob();
-			sinon.spy(FileReader.prototype, 'readAsText');
-			wrapper.find('.Trainer-file-input').simulate('change', {target: {files: [blob]}})
-			expect(FileReader.prototype.readAsText.calledWith(blob)).toBeTruthy();
+	describe('Lifecycle', () => {
+		describe('function componentWillUpdate()', () => {
+			it('must trigger handleModal with args', () => {
+				const handleModalStub = sinon.stub(wrapper.instance(), 'handleModal');
+				wrapper.instance().componentWillUpdate({
+					isLearning: false
+				});
+				handleModalStub.restore();
+				expect(handleModalStub.calledWith({
+					show: true,
+					content: 'Text learned !',
+					timeout: 2000
+				})).toBeTruthy();
+			});
 		});
 	});
 
-	describe('function onUrlEnter()', () => {
-		let stubedFetch;
-		beforeEach(() => {
-			stubedFetch = sinon.stub(window, 'fetch');
-			stubedFetch.returns(new Promise(resolve => resolve()));
-		});
-		afterEach(() => {
-		  stubedFetch.restore(window.fetch);
+	describe('functionality', () => {
+		describe('function onTextChange()', () => {
+			it('must set the correct state', () => {
+				wrapper.find('.Trainer-text-input').simulate('change', {target: {value: 'value'}});
+				expect(wrapper.state().text).toBe('value');
+			});
 		});
 
-		const wrapper = mount(<Trainer />);
-		const input = wrapper.find('.Trainer-url-input');
-
-		it('must return before fetching url on key != Enter', () => {
-			input.simulate('keydown', {target: {value: 'url' }, key: 'noEnter'});
-			expect(stubedFetch.called).toBeFalsy();
+		describe('function onUrlChange()', () => {
+			it('must set the correct state', () => {
+				wrapper.find('.Trainer-url-input').simulate('change', {target: {value: 'value'}});
+				expect(wrapper.state().urlInput).toMatchObject({
+					value: 'value'
+				});
+			});
 		});
 
-		it('must return before fetching url if input value is empty', () => {
-			input.simulate('keydown', {target: {value: '' }, key: 'Enter'});
-			expect(stubedFetch.called).toBeFalsy();
+		describe('function onUrlEnter()', () => {
+			const fetchStub = sinon.stub(window, 'fetch').returns({
+				then: (func) => {
+					func({
+						text: () => ({
+							then: (func) => func('<div>text one two</div>')
+						})
+					});
+					return {
+						catch: (func) => func()
+					}
+				}
+			});
+			const url = 'url';
+			const toggleUrlInputStub = sinon.stub(wrapper.instance(), 'toggleUrlInput');
+			const putLearningTextStub = sinon.stub(wrapper.instance(), 'putLearningText');
+			const handleModalStub = sinon.stub(wrapper.instance(), 'handleModal');
+			wrapper.state().urlInput.value = url;
+			wrapper.find('.Trainer-url-input').simulate('keydown', {key: 'Enter'});
+			toggleUrlInputStub.restore();
+			putLearningTextStub.restore();
+			handleModalStub.restore();
+
+			it('must trigger toggleUrlInput', () => {
+				expect(toggleUrlInputStub.called).toBeTruthy();
+			});
+
+			it('must trigger fetch with args', () => {
+				expect(fetchStub.calledWith(url)).toBeTruthy();
+			});
+
+			it('must trigger toggleUrlInput again', () => {
+				expect(toggleUrlInputStub.callCount).toBe(3);
+			});
+
+			describe('fetch.resolve()', () => {
+				it('must trigger putLearningText with args', () => {
+					expect(putLearningTextStub.calledWith('text one two')).toBeTruthy();
+				});
+			});
+
+			describe('fetch.reject()', () => {
+				it('must trigger handleModal with args', () => {
+					expect(handleModalStub.calledWith({
+						show: true,
+						content: '"' + url.substr(0, 20) + ((url.length > 20) ? '...' : '') + '" is blocking cross-site requests.'
+					})).toBeTruthy();
+				});
+			});
 		});
 
-		it('must trigger toggleUrlInput()', () => {
-			sinon.spy(Trainer.prototype, 'toggleUrlInput');
-			input.simulate('keydown', {target: {value: 'value' }, key: 'Enter'});
-			expect(Trainer.prototype.toggleUrlInput.called).toBeTruthy();
+		describe('function toggleUrlInput()', () => {
+			it('toggle url input "disabled" prop', () => {
+				wrapper.state().urlInput = {
+					disabled: false
+				};
+				wrapper.instance().toggleUrlInput();
+				expect(wrapper.state().urlInput).toEqual({
+					value: 'Fetching website data...',
+					disabled: true
+				});
+			});
 		});
 
-		it('must call fetch with the input value url', () => {
-			input.simulate('keydown', {target: {value: '127.0.0.1' }, key: 'Enter'});
-			expect(window.fetch.calledWith('127.0.0.1')).toBeTruthy();
-		});
-	});
+		describe('function onFileChange()', () => {
+			const putLearningTextStub = sinon.stub(wrapper.instance(), 'putLearningText');
+			const readAsTextSpy = sinon.spy();
+			sinon.stub(window, 'FileReader').returns({
+				addEventListener: (a, onFileLoad, c) => {
+					onFileLoad.call({
+						removeEventListener: () => {},
+						result: 'result'
+					});
+				},
+				readAsText: readAsTextSpy
+			});
+			wrapper.find('.Trainer-file-input').simulate('change', {target: {files: ['file_0']}});
+			putLearningTextStub.restore();
 
-	describe('function toggleUrlInput()', () => {
-		const wrapper = mount(<Trainer />);
+			it('must trigger readAsText with args', () => {
+				expect(readAsTextSpy.calledWith('file_0')).toBeTruthy();
+			});
 
-		it('toggle url input "disabled" prop', () => {
-			wrapper.instance().urlInput.disabled = false;
-			wrapper.instance().toggleUrlInput();
-			expect(wrapper.instance().urlInput.disabled).toBe(true);
-		});
-	});
-
-	describe('function onTextLearn()', () => {
-		const dispatch = sinon.spy();
-		const wrapper = mount(<Trainer dispatch={dispatch} />);
-		const button = wrapper.find('.Trainer-head-learnBtn');
-		sinon.spy(wrapper.instance(), 'handleModal')
-
-		const modalArg = {
-			show: true,
-			content: 'Learning text...'
-		};
-
-		it('return on empty text input', () => {
-			wrapper.instance().textInput.value = '';
-			button.simulate('click');
-			expect(wrapper.instance().handleModal.calledWith(modalArg)).toBeFalsy();
+			it('must trigger putLearningText with args', () => {
+				expect(putLearningTextStub.calledWith('result')).toBeTruthy();
+			});
 		});
 
-		it('trigger handleModal() on non empty text input', () => {
-			wrapper.instance().textInput.value = 'text';
-			button.simulate('click')
-			expect(wrapper.instance().handleModal.calledWith(modalArg)).toBeTruthy();
+		describe('function onTextLearn()', () => {
+			const handleModalStub = sinon.stub(wrapper.instance(), 'handleModal');
+			wrapper.state().text = 'value';
+			wrapper.find('.Trainer-head-learnBtn').simulate('click');
+			handleModalStub.restore();
+
+			it('must trigger handleModal with args', () => {
+				expect(handleModalStub.calledWith({
+					show: true,
+					content: 'Learning text...'
+				})).toBeTruthy();
+			});
+
+			it('trigger dispatch with setLearningState', () => {
+				expect(dispatchSpy.calledWith(setLearningState(true))).toBeTruthy();
+			});
+
+			it('trigger dispatch with setLearningState', () => {
+				expect(dispatchSpy.calledWith(trainFromText('value', props.settings))).toBeTruthy();
+			});
 		});
 
-		it('trigger disptach', () => {
-			button.simulate('click')
-			expect(dispatch.called).toBeTruthy();
-		});
-	});
-
-	sinon.spy(window, 'clearTimeout');
-
-	describe('function onModalClose()', () => {
-		const wrapper = mount(<Trainer />);
-
-		it('must clear the state:modalTimeout', () => {
-			const timeout = setTimeout(a => 1, 5000);
-			wrapper.state().modalTimeout = timeout;
+		describe('function onModalClose()', () => {
+			const handleModalStub = sinon.stub(wrapper.instance(), 'handleModal');
 			wrapper.instance().onModalClose();
-			expect(window.clearTimeout.calledWith(timeout)).toBeTruthy();
+			const state = wrapper.state().text;
+			handleModalStub.restore();
+
+			it('must trigger handleModal with args', () => {
+				expect(handleModalStub.calledWith({show: false})).toBeTruthy();
+			});
+
+			it('must empty the text input value', () => {
+				expect(state).toBe('');
+			});
 		});
 
-		it('must trigger handleModal() with arg', () => {
-			sinon.spy(wrapper.instance(), 'handleModal')
-			wrapper.instance().onModalClose();
-			expect(wrapper.instance().handleModal.calledWith({show: false})).toBeTruthy();
-		});
-
-		it('must empty the text input value', () => {
-			wrapper.instance().textInput.value = 'test';
-			wrapper.instance().onModalClose();
-			expect(wrapper.instance().textInput.value).toBe('');
-		});
-	});
-
-	describe('function handleModal()', () => {
-		const props = {
-			show: true,
-			content: 'content',
-			timeout: 1000
-		};
-
-		it('must set state', () => {
-			wrapper.instance().handleModal(props)
-			expect(wrapper.state('modalShow')).toBe(props.show);
-			expect(wrapper.state('modalContent')).toBe(props.content);
-		});
-
-		it('must clear the state:modalTimeout', () => {
-			const timeout = setTimeout(a => 1, 5000);
-			wrapper.state().modalTimeout = timeout;
-			wrapper.instance().handleModal(props);
-			expect(window.clearTimeout.calledWith(timeout)).toBeTruthy();
-		});
-
-		it('must set state:modalTimeout to new timeout', () => {
-			wrapper.state().modalTimeout = null;
-			wrapper.instance().handleModal(props);
-			expect(wrapper.state().modalTimeout).toBeTruthy();
-		});
-	});
-
-	describe('function putLearningText()', () => {
-		it('must set the text input value to " text"', () => {
-			const wrapper = mount(<Trainer />);
-			wrapper.instance().putLearningText('text');
-			expect(wrapper.instance().textInput.value).toBe(' text');
-		});
-	});
-
-	describe('function componentWillUpdate()', () => {
-		it('must NOT trigger handleModal()', () => {
-			const wrapper = shallow(<Trainer isLearning={true}/>);
-			sinon.spy(wrapper.instance(), 'handleModal')
-			wrapper.instance().componentWillUpdate({isLearning: true});
-			expect(wrapper.instance().handleModal.called).toBeFalsy();
-		});
-
-		it('must NOT trigger handleModal()', () => {
-			const wrapper = shallow(<Trainer isLearning={false}/>);
-			sinon.spy(wrapper.instance(), 'handleModal')
-			wrapper.instance().componentWillUpdate({isLearning: false});
-			expect(wrapper.instance().handleModal.called).toBeFalsy();
-		});
-
-		it('must trigger handleModal() with the given args', () => {
-			const wrapper = shallow(<Trainer isLearning={true}/>);
-			sinon.spy(wrapper.instance(), 'handleModal')
-			wrapper.instance().componentWillUpdate({isLearning: false});
-			expect(wrapper.instance().handleModal.calledWith({
+		describe('function handleModal()', () => {
+			const props = {
 				show: true,
-				content: 'Text learned !',
-				timeout: 2000
-			})).toBeTruthy();
+				content: 'content',
+				timeout: 1000
+			};
+			wrapper.instance().handleModal(props)
+
+			it('must set the state correctly', () => {
+				expect(wrapper.state()).toMatchObject({
+					modalShow: props.show,
+					modalContent: props.content
+				});
+			});
+
+			it('must set state:modalTimeout to new timeout', () => {
+				expect(wrapper.state().modalTimeout).toBeTruthy();
+			});
+		});
+
+		describe('function putLearningText()', () => {
+			it('must set the text input value', () => {
+				const text = wrapper.state().text;
+				wrapper.instance().putLearningText('text');
+				expect(wrapper.state().text).toBe(text + ' text');
+			});
 		});
 	});
 });

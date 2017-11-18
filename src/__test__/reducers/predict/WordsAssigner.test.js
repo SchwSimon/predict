@@ -1,9 +1,4 @@
-import {
-	assignWords,
-	nextWordsToSortedArray,
-	assignLeadingWords
-} from '../../../reducers/predict/WordsAssigner';
-
+import { assignWords,	nextWordsToSortedArray,	assignLeadingWords } from '../../../reducers/predict/WordsAssigner';
 import { parseText } from '../../../reducers/predict/TextParser';
 
 const parsedText = parseText('a b a b a b c a c b. c c c a. f');
